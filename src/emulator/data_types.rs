@@ -22,3 +22,46 @@ pub struct State8080 {
     pub cc: ConditionCodes,
     pub int_enable: u8,
 }
+
+pub enum Register {
+    A,
+    B,
+    C,
+    D,
+    E,
+    H,
+    L,
+    M,
+}
+
+impl Register {
+    pub fn from_u8(value: u8) -> Self {
+        match value {
+            0 => Register::B,
+            1 => Register::C,
+            2 => Register::D,
+            3 => Register::E,
+            4 => Register::H,
+            5 => Register::L,
+            6 => Register::M,
+            7 => Register::A,
+            _ => panic!("Invalid register number"),
+        }
+    }
+}
+
+pub enum RegisterPair {
+    BC,
+    DE,
+    HL,
+    SP,
+    PSW,
+}
+
+pub enum Flags {
+    Z,
+    S,
+    P,
+    CY,
+    AC,
+}
