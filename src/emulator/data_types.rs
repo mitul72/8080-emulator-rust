@@ -22,7 +22,37 @@ pub struct State8080 {
     pub pc: u16,
     pub memory: [u8; 0x10000], // 64KB memory
     pub cc: ConditionCodes,
-    pub int_enable: u8,
+    pub int_enable: bool,
+}
+
+impl State8080 {
+    pub fn get_flags_as_byte(&self) -> u8 {
+        let mut flags = 0;
+        if self.cc.z {
+            flags |= 0x40;
+        } // Zero flag
+        if self.cc.s {
+            flags |= 0x80;
+        } // Sign flag
+        if self.cc.p {
+            flags |= 0x04;
+        } // Parity flag
+        if self.cc.cy {
+            flags |= 0x01;
+        } // Carry flag
+        if self.cc.ac {
+            flags |= 0x10;
+        } // Auxiliary Carry flag
+        flags
+    }
+
+    pub fn set_flags_from_byte(&mut self, flags: u8) {
+        self.cc.z = (flags & 0x40) != 0;
+        self.cc.s = (flags & 0x80) != 0;
+        self.cc.p = (flags & 0x04) != 0;
+        self.cc.cy = (flags & 0x01) != 0;
+        self.cc.ac = (flags & 0x10) != 0;
+    }
 }
 
 impl Default for State8080 {
@@ -39,7 +69,7 @@ impl Default for State8080 {
             pc: 0,
             memory: [0; 0x10000],
             cc: ConditionCodes::default(),
-            int_enable: 0,
+            int_enable: false,
         }
     }
 }
