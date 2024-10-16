@@ -1,13 +1,33 @@
 use super::data_types;
 
-pub fn unimplemented_instruction() {
-    println!("Error: Unimplemented instruction\n");
-    std::process::exit(1);
+pub struct CPU {
+    state: data_types::State8080,
+}
+
+impl CPU {
+    pub fn new() -> Self {
+        CPU {
+            state: data_types::State8080::default(),
+        }
+    }
+
+    pub fn run(&mut self, program: Vec<u8>) {
+        self.state.memory = program;
+        while self.state.pc < self.state.memory.len() as u16 {
+            emulate_8080_op(&mut self.state);
+        }
+    }
+}
+
+pub fn unimplemented_instruction(instruction: u8) {
+    println!("Error: Unimplemented instruction 0x{:02X}\n", instruction);
+    // std::process::exit(1);
 }
 
 // TODO: Implement the following functions
 pub fn emulate_8080_op(state: &mut data_types::State8080) {
     let op_codes = &state.memory[state.pc as usize..];
+    println!("{:04X} ", op_codes[0]);
     match op_codes[0] {
         0x00 => nop(),
         0x01 => lxi(state, data_types::RegisterPair::BC),
@@ -17,7 +37,7 @@ pub fn emulate_8080_op(state: &mut data_types::State8080) {
         0x05 => dcr(state, data_types::Register::B),
         0x06 => mvi(state, data_types::Register::B),
         0x07 => rlc(state),
-        0x08 => unimplemented_instruction(),
+        0x08 => unimplemented_instruction(op_codes[0]),
         0x09 => dad(state, data_types::RegisterPair::BC),
         0x0A => ldax(state, data_types::RegisterPair::BC),
         0x0B => dcx(state, data_types::RegisterPair::BC),
@@ -25,7 +45,7 @@ pub fn emulate_8080_op(state: &mut data_types::State8080) {
         0x0D => dcr(state, data_types::Register::C),
         0x0E => mvi(state, data_types::Register::C),
         0x0F => rrc(state),
-        0x10 => unimplemented_instruction(),
+        0x10 => unimplemented_instruction(op_codes[0]),
         0x11 => lxi(state, data_types::RegisterPair::DE),
         0x12 => stax(state, data_types::RegisterPair::DE),
         0x13 => inx(state, data_types::RegisterPair::DE),
@@ -33,7 +53,7 @@ pub fn emulate_8080_op(state: &mut data_types::State8080) {
         0x15 => dcr(state, data_types::Register::D),
         0x16 => mvi(state, data_types::Register::D),
         0x17 => ral(state),
-        0x18 => unimplemented_instruction(),
+        0x18 => unimplemented_instruction(op_codes[0]),
         0x19 => dad(state, data_types::RegisterPair::DE),
         0x1A => ldax(state, data_types::RegisterPair::DE),
         0x1B => dcx(state, data_types::RegisterPair::DE),
@@ -41,7 +61,7 @@ pub fn emulate_8080_op(state: &mut data_types::State8080) {
         0x1D => dcr(state, data_types::Register::E),
         0x1E => mvi(state, data_types::Register::E),
         0x1F => rar(state),
-        0x20 => unimplemented_instruction(),
+        0x20 => unimplemented_instruction(op_codes[0]),
         0x21 => lxi(state, data_types::RegisterPair::HL),
         0x22 => shld(state),
         0x23 => inx(state, data_types::RegisterPair::HL),
@@ -49,7 +69,7 @@ pub fn emulate_8080_op(state: &mut data_types::State8080) {
         0x25 => dcr(state, data_types::Register::H),
         0x26 => mvi(state, data_types::Register::H),
         0x27 => daa(state),
-        0x28 => unimplemented_instruction(),
+        0x28 => unimplemented_instruction(op_codes[0]),
         0x29 => dad(state, data_types::RegisterPair::HL),
         0x2A => lhld(state),
         0x2B => dcx(state, data_types::RegisterPair::HL),
@@ -57,7 +77,7 @@ pub fn emulate_8080_op(state: &mut data_types::State8080) {
         0x2D => dcr(state, data_types::Register::L),
         0x2E => mvi(state, data_types::Register::L),
         0x2F => cma(state),
-        0x30 => unimplemented_instruction(),
+        0x30 => unimplemented_instruction(op_codes[0]),
         0x31 => lxi(state, data_types::RegisterPair::SP),
         0x32 => sta(state),
         0x33 => inx(state, data_types::RegisterPair::SP),
@@ -65,7 +85,7 @@ pub fn emulate_8080_op(state: &mut data_types::State8080) {
         0x35 => dcr_m(state),
         0x36 => mvi_m(state),
         0x37 => stc(state),
-        0x38 => unimplemented_instruction(),
+        0x38 => unimplemented_instruction(op_codes[0]),
         0x39 => dad(state, data_types::RegisterPair::SP),
         0x3A => lda(state),
         0x3B => dcx(state, data_types::RegisterPair::SP),
@@ -140,7 +160,7 @@ pub fn emulate_8080_op(state: &mut data_types::State8080) {
         0xC8 => rz(state),
         0xC9 => ret(state),
         0xCA => jz(state),
-        0xCB => unimplemented_instruction(),
+        0xCB => unimplemented_instruction(op_codes[0]),
         0xCC => cz(state),
         0xCD => call(state),
         0xCE => aci(state),
@@ -154,11 +174,11 @@ pub fn emulate_8080_op(state: &mut data_types::State8080) {
         0xD6 => sui(state),
         0xD7 => rst(state, 2),
         0xD8 => rc(state),
-        0xD9 => unimplemented_instruction(),
+        0xD9 => unimplemented_instruction(op_codes[0]),
         0xDA => jc(state),
         0xDB => inp(state),
         0xDC => cc(state),
-        0xDD => unimplemented_instruction(),
+        0xDD => unimplemented_instruction(op_codes[0]),
         0xDE => sbi(state),
         0xDF => rst(state, 3),
         0xE0 => rpo(state),
@@ -174,7 +194,7 @@ pub fn emulate_8080_op(state: &mut data_types::State8080) {
         0xEA => jpe(state),
         0xEB => xchg(state),
         0xEC => cpe(state),
-        0xED => unimplemented_instruction(),
+        0xED => unimplemented_instruction(op_codes[0]),
         0xEE => xri(state),
         0xEF => rst(state, 5),
         0xF0 => rp(state),
@@ -190,7 +210,7 @@ pub fn emulate_8080_op(state: &mut data_types::State8080) {
         0xFA => jm(state),
         0xFB => ei(state),
         0xFC => cm(state),
-        0xFD => unimplemented_instruction(),
+        0xFD => unimplemented_instruction(op_codes[0]),
         0xFE => cpi(state),
         0xFF => rst(state, 7),
     }
@@ -202,7 +222,29 @@ fn nop() {
 }
 
 fn lxi(state: &mut data_types::State8080, register_pair: data_types::RegisterPair) {
-    // Implement the LXI instruction
+    let low: u8 = state.memory[(state.pc + 1) as usize];
+    let high = state.memory[(state.pc + 2) as usize];
+    match register_pair {
+        data_types::RegisterPair::BC => {
+            state.c = low;
+            state.b = high;
+        }
+        data_types::RegisterPair::DE => {
+            state.e = low;
+            state.d = high;
+        }
+        data_types::RegisterPair::HL => {
+            state.l = low;
+            state.h = high;
+        }
+        data_types::RegisterPair::SP => {
+            state.sp = ((high as u16) << 8) | (low as u16);
+        }
+        data_types::RegisterPair::PSW => {
+            println!("PSW line called in lxi instruction");
+        }
+    }
+    state.pc += 2;
 }
 
 fn stax(state: &mut data_types::State8080, register_pair: data_types::RegisterPair) {
@@ -302,11 +344,51 @@ fn hlt(state: &mut data_types::State8080) {
 }
 
 fn mov(state: &mut data_types::State8080, dest: data_types::Register, src: data_types::Register) {
-    // Implement the MOV instruction
+    let src_value = match src {
+        data_types::Register::A => state.a,
+        data_types::Register::B => state.b,
+        data_types::Register::C => state.c,
+        data_types::Register::D => state.d,
+        data_types::Register::E => state.e,
+        data_types::Register::H => state.h,
+        data_types::Register::L => state.l,
+        data_types::Register::M => {
+            let offset = (state.h as u16) << 8 | state.l as u16;
+            state.memory[offset as usize]
+        }
+    };
+    match dest {
+        data_types::Register::A => state.a = src_value,
+        data_types::Register::B => state.b = src_value,
+        data_types::Register::C => state.c = src_value,
+        data_types::Register::D => state.d = src_value,
+        data_types::Register::E => state.e = src_value,
+        data_types::Register::H => state.h = src_value,
+        data_types::Register::L => state.l = src_value,
+        data_types::Register::M => {
+            let offset = (state.h as u16) << 8 | state.l as u16;
+            state.memory[offset as usize] = src_value;
+        }
+    };
 }
 
 fn add(state: &mut data_types::State8080, src: data_types::Register) {
-    // Implement the ADD instruction
+    let val = match src {
+        data_types::Register::A => state.a,
+        data_types::Register::B => state.b,
+        data_types::Register::C => state.c,
+        data_types::Register::D => state.d,
+        data_types::Register::E => state.e,
+        data_types::Register::H => state.h,
+        data_types::Register::L => state.l,
+        data_types::Register::M => {
+            let addr = get_m_address(state);
+            state.memory[addr]
+        }
+    };
+    let answer = state.a as u16 + val as u16;
+    set_flag_add(state, answer);
+    state.a = (answer & 0xff) as u8;
 }
 
 fn adc(state: &mut data_types::State8080, src: data_types::Register) {
@@ -527,4 +609,22 @@ fn cpi(state: &mut data_types::State8080) {
 
 fn jpo(state: &mut data_types::State8080) {
     // Implement the JPO instruction
+}
+
+#[inline]
+fn set_flag_add(state: &mut data_types::State8080, res: u16) {
+    state.cc.z = (res & 0xff) == 0;
+    state.cc.s = (res & 0x80) != 0;
+    state.cc.cy = res > 0xff;
+    state.cc.p = parity((res & 0xff) as u8);
+}
+
+#[inline]
+fn parity(value: u8) -> bool {
+    value.count_ones() % 2 == 0
+}
+
+#[inline]
+fn get_m_address(state: &mut data_types::State8080) -> usize {
+    (((state.h as u16) << 8) | (state.l as u16)) as usize
 }
