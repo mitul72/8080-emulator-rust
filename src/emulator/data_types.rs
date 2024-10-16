@@ -10,7 +10,6 @@ pub struct ConditionCodes {
     pub ac: bool,
 }
 
-#[derive(Default)]
 pub struct State8080 {
     pub a: u8,
     pub b: u8,
@@ -21,9 +20,28 @@ pub struct State8080 {
     pub l: u8,
     pub sp: u16,
     pub pc: u16,
-    pub memory: Vec<u8>,
+    pub memory: [u8; 0x10000], // 64KB memory
     pub cc: ConditionCodes,
     pub int_enable: u8,
+}
+
+impl Default for State8080 {
+    fn default() -> Self {
+        State8080 {
+            a: 0,
+            b: 0,
+            c: 0,
+            d: 0,
+            e: 0,
+            h: 0,
+            l: 0,
+            sp: 0,
+            pc: 0,
+            memory: [0; 0x10000],
+            cc: ConditionCodes::default(),
+            int_enable: 0,
+        }
+    }
 }
 
 pub enum Register {

@@ -11,8 +11,13 @@ impl CPU {
         }
     }
 
-    pub fn run(&mut self, program: Vec<u8>) {
-        self.state.memory = program;
+    pub fn init_rom(&mut self, rom: Vec<u8>) {
+        for (index, &byte) in rom.iter().enumerate() {
+            self.state.memory[index] = byte;
+        }
+    }
+
+    pub fn run(&mut self) {
         while self.state.pc < self.state.memory.len() as u16 {
             emulate_8080_op(&mut self.state);
         }
@@ -260,11 +265,55 @@ fn inr(state: &mut data_types::State8080, register: data_types::Register) {
 }
 
 fn dcr(state: &mut data_types::State8080, register: data_types::Register) {
-    // Implement the DCR instruction
+    let value = match register {
+        data_types::Register::A => state.a,
+        data_types::Register::B => state.b,
+        data_types::Register::C => state.c,
+        data_types::Register::D => state.d,
+        data_types::Register::E => state.e,
+        data_types::Register::H => state.h,
+        data_types::Register::L => state.l,
+        data_types::Register::M => {
+            let addr = get_memory_address(state);
+            state.memory[addr]
+        }
+    };
+
+    let result = value.wrapping_sub(1);
+
+    match register {
+        data_types::Register::A => state.a = result,
+        data_types::Register::B => state.b = result,
+        data_types::Register::C => state.c = result,
+        data_types::Register::D => state.d = result,
+        data_types::Register::E => state.e = result,
+        data_types::Register::H => state.h = result,
+        data_types::Register::L => state.l = result,
+        data_types::Register::M => {
+            let addr = get_memory_address(state);
+            state.memory[addr] = result;
+        }
+    };
+
+    set_flags_dcr(state, value, result);
 }
 
 fn mvi(state: &mut data_types::State8080, register: data_types::Register) {
-    // Implement the MVI instruction
+    let val = state.memory[(state.pc + 1) as usize];
+    match register {
+        data_types::Register::A => state.a = val,
+        data_types::Register::B => state.b = val,
+        data_types::Register::C => state.c = val,
+        data_types::Register::D => state.d = val,
+        data_types::Register::E => state.e = val,
+        data_types::Register::H => state.h = val,
+        data_types::Register::L => state.l = val,
+        data_types::Register::M => {
+            let addr = get_memory_address(state);
+            state.memory[addr] = val;
+        }
+    }
+    state.pc += 1;
 }
 
 fn rlc(state: &mut data_types::State8080) {
@@ -320,11 +369,18 @@ fn inr_m(state: &mut data_types::State8080) {
 }
 
 fn dcr_m(state: &mut data_types::State8080) {
-    // Implement the DCR M instruction
+    let addr = get_memory_address(state);
+    let val = state.memory[addr];
+    let res = val.wrapping_sub(1);
+    state.memory[addr] = res;
+    set_flags_dcr(state, val, res);
 }
 
 fn mvi_m(state: &mut data_types::State8080) {
-    // Implement the MVI M instruction
+    let val = state.memory[(state.pc + 1) as usize];
+    let addr = get_memory_address(state);
+    state.memory[addr] = val;
+    state.pc += 1;
 }
 
 fn stc(state: &mut data_types::State8080) {
@@ -382,7 +438,7 @@ fn add(state: &mut data_types::State8080, src: data_types::Register) {
         data_types::Register::H => state.h,
         data_types::Register::L => state.l,
         data_types::Register::M => {
-            let addr = get_m_address(state);
+            let addr = get_memory_address(state);
             state.memory[addr]
         }
     };
@@ -444,7 +500,11 @@ fn push(state: &mut data_types::State8080, register_pair: data_types::RegisterPa
 }
 
 fn adi(state: &mut data_types::State8080) {
-    // Implement the ADI instruction
+    // ADI instruction add next immediate value in memory (from what i understand)
+    let answer: u16 = state.a as u16 + state.memory[(state.pc + 1) as usize] as u16;
+    set_flag_add(state, answer);
+    state.a = (answer & 0xff) as u8;
+    state.pc += 1;
 }
 
 fn rst(state: &mut data_types::State8080, num: u8) {
@@ -625,6 +685,23 @@ fn parity(value: u8) -> bool {
 }
 
 #[inline]
-fn get_m_address(state: &mut data_types::State8080) -> usize {
+fn get_memory_address(state: &mut data_types::State8080) -> usize {
     (((state.h as u16) << 8) | (state.l as u16)) as usize
+}
+
+#[inline]
+fn set_flags_dcr(state: &mut data_types::State8080, value_before: u8, result: u8) {
+    // Zero Flag
+    state.cc.z = result == 0;
+
+    // Sign Flag
+    state.cc.s = (result & 0x80) != 0;
+
+    // Parity Flag
+    state.cc.p = parity(result);
+
+    // Auxiliary Carry Flag
+    state.cc.ac = (value_before & 0x0F) == 0x00;
+
+    // Carry Flag is not affected
 }

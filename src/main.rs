@@ -8,5 +8,6 @@ pub fn main() {
     let memory = utils::read_bin_file(&file_path);
     // disassembler::Disassembler::disassemble(&memory);
     let mut cpu = cpu::CPU::new();
-    cpu.run(memory);
+    cpu.init_rom(memory);
+    cpu.run();
 }
