@@ -3,7 +3,7 @@ use super::data_types;
 const ROM_SIZE: u16 = 0x2000;
 
 pub struct CPU {
-    state: data_types::State8080,
+    pub state: data_types::State8080,
 }
 
 impl CPU {
@@ -23,6 +23,14 @@ impl CPU {
         while self.state.pc < ROM_SIZE {
             emulate_8080_op(&mut self.state);
         }
+    }
+
+    pub fn get_video_memory(&self) -> &[u8] {
+        &self.state.memory[0x2400..0x4000]
+    }
+
+    pub fn get_state(&self) -> &data_types::State8080 {
+        &self.state
     }
 }
 
@@ -700,7 +708,7 @@ fn rnc(state: &mut data_types::State8080) {
 fn out(state: &mut data_types::State8080) {
     // TODO: examine this instruction
     let port = state.memory[(state.pc + 1) as usize];
-    println!("OUT to port: {:02X}, value: {:02X}", port, state.a);
+    handle_out(state, port, state.a);
     state.pc += 2;
 }
 
@@ -725,7 +733,9 @@ fn jc(state: &mut data_types::State8080) {
 }
 
 fn inp(state: &mut data_types::State8080) {
-    unimplemented_instruction(state.pc as u8);
+    let port = state.memory[(state.pc + 1) as usize];
+    state.a = handle_in(state, port);
+    state.pc += 2;
 }
 
 fn cc(state: &mut data_types::State8080) {
@@ -972,4 +982,35 @@ fn set_sp(state: &mut data_types::State8080, value: u16) {
 fn get_jmp_target_address(state: &data_types::State8080) -> u16 {
     (state.memory[(state.pc + 2) as usize] as u16) << 8
         | state.memory[(state.pc + 1) as usize] as u16
+}
+
+fn handle_in(state: &mut data_types::State8080, port: u8) -> u8 {
+    match port {
+        3 => {
+            // Return result from shift register (shift1 << 8 | shift0) >> shift_offset
+            let shift_val = (state.shift1 as u16) << 8 | state.shift0 as u16;
+            (shift_val >> (8 - state.shift_offset)) as u8
+        }
+        _ => {
+            // If the port is not implemented, return 0
+            0
+        }
+    }
+}
+
+fn handle_out(state: &mut data_types::State8080, port: u8, value: u8) {
+    match port {
+        2 => {
+            // Set the shift register's offset
+            state.shift_offset = value & 0x7;
+        }
+        4 => {
+            // Load shift register: move shift1 to shift0, and load value into shift1
+            state.shift0 = state.shift1;
+            state.shift1 = value;
+        }
+        _ => {
+            // Handle other ports (e.g., sound-related ports, debug ports)
+        }
+    }
 }

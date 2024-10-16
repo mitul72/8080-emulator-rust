@@ -20,6 +20,13 @@ pub struct State8080 {
     pub l: u8,
     pub sp: u16,
     pub pc: u16,
+
+    pub shift0: u8,
+    pub shift1: u8,
+    pub shift_offset: u8,
+
+    pub in_port1: u8,
+
     pub memory: [u8; 0x10000], // 64KB memory
     pub cc: ConditionCodes,
     pub int_enable: bool,
@@ -67,6 +74,12 @@ impl Default for State8080 {
             l: 0,
             sp: 0,
             pc: 0,
+
+            shift0: 0,
+            shift1: 0,
+            shift_offset: 0,
+            in_port1: 0,
+
             memory: [0; 0x10000],
             cc: ConditionCodes::default(),
             int_enable: false,
@@ -142,4 +155,12 @@ pub enum Flags {
     P,
     CY,
     AC,
+}
+
+pub enum Keys {
+    Start,
+    Up,
+    Down,
+    Left,
+    Right,
 }
