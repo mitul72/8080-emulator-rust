@@ -11,7 +11,12 @@ fn handle_key_down(state: &mut data_types::State8080, key: sdl2::keyboard::Keyco
         sdl2::keyboard::Keycode::Space => {
             state.in_port1 |= 0x10; // Set bit 4 (Player 1 Fire)
         }
-        // Add other keys like Coin, Start, etc.
+        sdl2::keyboard::Keycode::TAB => {
+            state.in_port1 |= 0x01; // Set bit 0 (Coin)
+        }
+        sdl2::keyboard::Keycode::RETURN => {
+            state.in_port1 |= 0x04; // Set bit 2 (Player 1 Start)
+        }
         _ => {}
     }
 }
@@ -27,7 +32,12 @@ fn handle_key_up(state: &mut data_types::State8080, key: sdl2::keyboard::Keycode
         sdl2::keyboard::Keycode::Space => {
             state.in_port1 &= !0x10; // Clear bit 4 (Player 1 Fire)
         }
-        // Add other keys like Coin, Start, etc.
+        sdl2::keyboard::Keycode::TAB => {
+            state.in_port1 &= !0x01; // Clear bit 0 (Coin)
+        }
+        sdl2::keyboard::Keycode::RETURN => {
+            state.in_port1 &= !0x04; // Clear bit 2 (Player 1 Start)
+        }
         _ => {}
     }
 }
