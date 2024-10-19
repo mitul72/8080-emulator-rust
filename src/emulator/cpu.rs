@@ -1164,7 +1164,7 @@ pub fn generate_interrupt(state: &mut data_types::State8080, interrupt_num: u16)
         // Set the PC to the interrupt vector (interrupt_num * 8)
         state.pc = 8 * interrupt_num;
 
-        state.pc += 1;
+        // state.pc += 1;
 
         // Disable further interrupts until an EI instruction is executed
         state.int_enable = false;

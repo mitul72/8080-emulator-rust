@@ -40,45 +40,23 @@ impl SpaceInvadersMachine {
         &self.cpu.state.memory
     }
 
-    pub fn time_usec(&self) -> f64 {
-        // Returns the elapsed time in microseconds since the program started
-        self.last_timer.elapsed().as_secs_f64()
-    }
-
     pub fn do_cpu(&mut self) {
-        let now = self.time_usec();
-
-        // Initialize the timer and interrupts on the first run
-        if self.last_timer.elapsed().as_secs_f64() == 0.0 {
-            self.last_timer = Instant::now();
-            self.next_interrupt = self.last_timer.elapsed().as_secs_f64() * 1_000_000.0 + 16000.0;
-            println!("next_int: {}", self.next_interrupt);
-            self.which_interrupt = 1;
-        }
-
-        // Handle interrupts
-        if self.cpu.state.int_enable && (now > self.next_interrupt) {
-            if self.which_interrupt == 1 {
-                cpu::generate_interrupt(&mut self.cpu.state, 1); // Generate INT 1
-                self.which_interrupt = 2;
-            } else {
-                cpu::generate_interrupt(&mut self.cpu.state, 2); // Generate INT 2
-                self.which_interrupt = 1;
-            }
-            self.next_interrupt = now + 8000.0; // Schedule next interrupt
-        }
-
-        // How much time has passed and how many CPU cycles are required to catch up?
-        let since_last = now - self.last_timer.elapsed().as_secs_f64();
-        println!("since_last: {}", since_last);
-        let cycles_to_catch_up = (2.0 * since_last) as i32; // 2 MHz CPU
-        while self.cpu.state.cycles < cycles_to_catch_up {
+        // let cycles_to_catch_up = (2.0 * since_last) as i32; // 2 MHz CPU
+        while self.cpu.state.cycles < 1000 {
             self.cpu.state.cycles += cpu::emulate_8080_op(&mut self.cpu.state) as i32;
         }
         self.cpu.state.cycles = 0;
 
-        // Update the last timer value to now
-        self.last_timer = Instant::now();
+        if (self.last_timer.elapsed().as_secs_f64()) > (1.0 / 60.0) {
+            if self.which_interrupt == 1 {
+                cpu::generate_interrupt(&mut self.cpu.state, 1);
+                self.which_interrupt = 2;
+            } else {
+                cpu::generate_interrupt(&mut self.cpu.state, 2);
+                self.which_interrupt = 1;
+            }
+            self.last_timer = Instant::now();
+        }
     }
 
     pub fn start_emulation(&mut self) {
