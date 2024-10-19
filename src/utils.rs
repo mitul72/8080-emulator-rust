@@ -1,3 +1,5 @@
+use sdl2::image;
+use sdl2::surface::Surface;
 use std::env;
 use std::fs::File;
 use std::io::Read;
@@ -42,4 +44,17 @@ pub fn get_file_path() -> String {
         file_path = args[1].clone();
     }
     return file_path;
+}
+
+pub fn load_icon() -> Surface<'static> {
+    // Initialize SDL2_image
+    let _image_context = image::init(image::InitFlag::JPG).unwrap();
+
+    // Load the icon image
+    let icon_path = "src/assets/invaders_mascot.bmp";
+    let icon = match Surface::load_bmp(icon_path) {
+        Ok(icon) => icon,
+        Err(error) => panic!("Problem loading icon: {:?}", error),
+    };
+    icon
 }

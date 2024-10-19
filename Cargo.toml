@@ -4,5 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+heapless = "0.8.0"
+image = "0.25.3"
 rustc-hash = "2.0.0"
-sdl2 = "0.37.0"
+sdl2 = { version = "0.37.0", features = ["image"] }

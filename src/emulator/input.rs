@@ -1,6 +1,6 @@
 use super::data_types;
 
-fn handle_key_down(state: &mut data_types::State8080, key: sdl2::keyboard::Keycode) {
+pub fn handle_key_down(state: &mut data_types::State8080, key: sdl2::keyboard::Keycode) {
     match key {
         sdl2::keyboard::Keycode::Left => {
             state.in_port1 |= 0x20; // Set bit 5 (Player 1 Left)
@@ -21,7 +21,7 @@ fn handle_key_down(state: &mut data_types::State8080, key: sdl2::keyboard::Keyco
     }
 }
 
-fn handle_key_up(state: &mut data_types::State8080, key: sdl2::keyboard::Keycode) {
+pub fn handle_key_up(state: &mut data_types::State8080, key: sdl2::keyboard::Keycode) {
     match key {
         sdl2::keyboard::Keycode::Left => {
             state.in_port1 &= !0x20; // Clear bit 5 (Player 1 Left)
