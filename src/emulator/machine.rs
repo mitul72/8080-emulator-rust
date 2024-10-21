@@ -42,14 +42,12 @@ impl SpaceInvadersMachine {
 
     pub fn do_cpu(&mut self) {
         let mut cycles = 0;
-        let cycles_per_interrupt = 16_666; // Approximate value
-        let time = Instant::now();
+        let cycles_per_interrupt = 16_666;
+
         while cycles < cycles_per_interrupt {
             let op_cycles = cpu::emulate_8080_op(&mut self.cpu.state) as i32;
             cycles += op_cycles;
         }
-        print!("time elapsed for 16_666: {} ", time.elapsed().as_secs_f64());
-        // Generate the interrupt
         if self.cpu.state.int_enable {
             if self.which_interrupt == 1 {
                 cpu::generate_interrupt(&mut self.cpu.state, 1);
@@ -62,20 +60,7 @@ impl SpaceInvadersMachine {
     }
 
     pub fn start_emulation(&mut self) {
-        // Create a timer with 1 millisecond intervals
-        // let interval = Duration::from_millis(1);
-        // println!("Starting emulation");
-
-        // Run the emulator loop
-        // let start = Instant::now();
-        // Call the `do_cpu` method which simulates the CPU
         self.do_cpu();
-
-        // Sleep for the remaining time in the interval to ensure it runs every 1 ms
-        // let elapsed = start.elapsed();
-        // if elapsed < interval {
-        //     // thread::sleep(interval - elapsed);
-        // }
     }
     pub fn handle_key_down(&mut self, key: sdl2::keyboard::Keycode) {
         self.cpu.handle_key_down(key);

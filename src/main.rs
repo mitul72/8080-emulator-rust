@@ -58,18 +58,18 @@ fn main() {
             match event {
                 Event::Quit { .. } => break 'running,
                 Event::KeyDown {
-                    keycode: Some(Keycode),
+                    keycode: Some(keycode),
                     ..
                 } => {
-                    invaders.handle_key_down(Keycode);
+                    invaders.handle_key_down(keycode);
                     // this will generate an interrupt
                     // generate_interrupt(&mut invaders, 1);
                 }
                 Event::KeyUp {
-                    keycode: Some(Keycode),
+                    keycode: Some(keycode),
                     ..
                 } => {
-                    invaders.handle_key_up(Keycode);
+                    invaders.handle_key_up(keycode);
                 }
                 _ => {}
             }

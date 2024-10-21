@@ -1,7 +1,5 @@
 use super::data_types::{self, CYCLE_TABLE};
 
-const ROM_SIZE: u16 = 0x2000;
-
 pub struct CPU {
     pub state: data_types::State8080,
 }
@@ -38,7 +36,6 @@ pub fn unimplemented_instruction(instruction: u8) {
     panic!("Error: Unimplemented instruction 0x{:02X}\n", instruction);
 }
 
-// TODO: Implement the following functions
 pub fn emulate_8080_op(state: &mut data_types::State8080) -> u8 {
     let op_codes = &state.memory[state.pc as usize..];
     let op_code = op_codes[0];
@@ -234,12 +231,13 @@ pub fn emulate_8080_op(state: &mut data_types::State8080) -> u8 {
     return CYCLE_TABLE[op_code as usize];
 }
 
-#[inline]
+#[inline(always)]
 fn nop(state: &mut data_types::State8080) {
     // No operation
     state.pc += 1;
 }
 
+#[inline(always)]
 fn lxi(state: &mut data_types::State8080, register_pair: data_types::RegisterPair) {
     let low: u8 = state.memory[(state.pc + 1) as usize];
     let high = state.memory[(state.pc + 2) as usize];
@@ -266,6 +264,7 @@ fn lxi(state: &mut data_types::State8080, register_pair: data_types::RegisterPai
     state.pc += 3;
 }
 
+#[inline(always)]
 fn stax(state: &mut data_types::State8080, register_pair: data_types::RegisterPair) {
     let addr = match register_pair {
         data_types::RegisterPair::BC => get_bc(state),
@@ -276,6 +275,7 @@ fn stax(state: &mut data_types::State8080, register_pair: data_types::RegisterPa
     state.pc += 1;
 }
 
+#[inline(always)]
 fn inx(state: &mut data_types::State8080, register_pair: &data_types::RegisterPair) {
     let value = get_register_pair_value(state, register_pair);
     let result = value.wrapping_add(1);
@@ -283,6 +283,7 @@ fn inx(state: &mut data_types::State8080, register_pair: &data_types::RegisterPa
     state.pc += 1;
 }
 
+#[inline(always)]
 fn inr(state: &mut data_types::State8080, register: data_types::Register) {
     match register {
         data_types::Register::A => {
@@ -331,6 +332,7 @@ fn inr(state: &mut data_types::State8080, register: data_types::Register) {
     state.pc += 1;
 }
 
+#[inline(always)]
 fn dcr(state: &mut data_types::State8080, register: data_types::Register) {
     let value = match register {
         data_types::Register::A => state.a,
@@ -366,6 +368,7 @@ fn dcr(state: &mut data_types::State8080, register: data_types::Register) {
     state.pc += 1;
 }
 
+#[inline(always)]
 fn mvi(state: &mut data_types::State8080, register: data_types::Register) {
     let val = state.memory[(state.pc + 1) as usize];
     match register {
@@ -384,6 +387,7 @@ fn mvi(state: &mut data_types::State8080, register: data_types::Register) {
     state.pc += 2;
 }
 
+#[inline(always)]
 fn rlc(state: &mut data_types::State8080) {
     // TODO: Double check this implementation
     let x = state.a;
@@ -392,6 +396,7 @@ fn rlc(state: &mut data_types::State8080) {
     state.pc += 1;
 }
 
+#[inline(always)]
 fn dad(state: &mut data_types::State8080, register_pair: &data_types::RegisterPair) {
     let hl = get_hl(state);
     let rp_value = get_register_pair_value(state, register_pair);
@@ -403,6 +408,7 @@ fn dad(state: &mut data_types::State8080, register_pair: &data_types::RegisterPa
     state.pc += 1;
 }
 
+#[inline(always)]
 fn ldax(state: &mut data_types::State8080, register_pair: data_types::RegisterPair) {
     let addr = match register_pair {
         data_types::RegisterPair::BC => get_bc(state),
@@ -413,6 +419,7 @@ fn ldax(state: &mut data_types::State8080, register_pair: data_types::RegisterPa
     state.pc += 1;
 }
 
+#[inline(always)]
 fn dcx(state: &mut data_types::State8080, register_pair: &data_types::RegisterPair) {
     let value = get_register_pair_value(state, register_pair);
     let result = value.wrapping_sub(1);
@@ -421,6 +428,7 @@ fn dcx(state: &mut data_types::State8080, register_pair: &data_types::RegisterPa
     state.pc += 1;
 }
 
+#[inline(always)]
 fn rrc(state: &mut data_types::State8080) {
     let x = state.a;
     state.a = (x >> 1) | (x << 7); // Rotate right through carry
@@ -428,10 +436,12 @@ fn rrc(state: &mut data_types::State8080) {
     state.pc += 1;
 }
 
+#[inline(always)]
 fn ral(state: &mut data_types::State8080) {
     unimplemented_instruction(state.memory[state.pc as usize]);
 }
 
+#[inline(always)]
 fn rar(state: &mut data_types::State8080) {
     let x = state.a;
     state.a = (x >> 1) | (state.cc.cy as u8) << 7;
@@ -439,6 +449,7 @@ fn rar(state: &mut data_types::State8080) {
     state.pc += 1;
 }
 
+#[inline(always)]
 fn shld(state: &mut data_types::State8080) {
     let addr = get_jmp_target_address(state);
     state.memory[addr as usize] = state.l;
@@ -446,6 +457,7 @@ fn shld(state: &mut data_types::State8080) {
     state.pc += 3;
 }
 
+#[inline(always)]
 fn daa(state: &mut data_types::State8080) {
     let mut temp: u16 = state.a as u16;
     if state.cc.ac || (temp & 0x0F) > 9 {
@@ -460,6 +472,7 @@ fn daa(state: &mut data_types::State8080) {
     state.pc += 1;
 }
 
+#[inline(always)]
 fn lhld(state: &mut data_types::State8080) {
     let addr = get_jmp_target_address(state);
     state.l = state.memory[addr as usize];
@@ -467,16 +480,19 @@ fn lhld(state: &mut data_types::State8080) {
     state.pc += 3;
 }
 
+#[inline(always)]
 fn cma(state: &mut data_types::State8080) {
     state.a = !state.a;
     state.pc += 1;
 }
 
+#[inline(always)]
 fn sta(state: &mut data_types::State8080) {
     state.memory[get_jmp_target_address(state) as usize] = state.a;
     state.pc += 3;
 }
 
+#[inline(always)]
 fn dcr_m(state: &mut data_types::State8080) {
     let addr = get_memory_address(state);
     let val = state.memory[addr];
@@ -486,6 +502,7 @@ fn dcr_m(state: &mut data_types::State8080) {
     state.pc += 1;
 }
 
+#[inline(always)]
 fn mvi_m(state: &mut data_types::State8080) {
     let val = state.memory[(state.pc + 1) as usize];
     let addr = get_memory_address(state);
@@ -493,24 +510,29 @@ fn mvi_m(state: &mut data_types::State8080) {
     state.pc += 2;
 }
 
+#[inline(always)]
 fn stc(state: &mut data_types::State8080) {
     state.cc.cy = true;
     state.pc += 1;
 }
 
+#[inline(always)]
 fn lda(state: &mut data_types::State8080) {
     state.a = state.memory[get_jmp_target_address(state) as usize];
     state.pc += 3;
 }
 
+#[inline(always)]
 fn cmc(state: &mut data_types::State8080) {
     unimplemented_instruction(state.memory[state.pc as usize]);
 }
 
+#[inline(always)]
 fn hlt(state: &mut data_types::State8080) {
     unimplemented_instruction(state.memory[state.pc as usize]);
 }
 
+#[inline(always)]
 fn mov(state: &mut data_types::State8080, dest: data_types::Register, src: data_types::Register) {
     let src_value = match src {
         data_types::Register::A => state.a,
@@ -541,6 +563,7 @@ fn mov(state: &mut data_types::State8080, dest: data_types::Register, src: data_
     state.pc += 1;
 }
 
+#[inline(always)]
 fn add(state: &mut data_types::State8080, src: data_types::Register) {
     let val = match src {
         data_types::Register::A => state.a,
@@ -561,6 +584,7 @@ fn add(state: &mut data_types::State8080, src: data_types::Register) {
     state.pc += 1;
 }
 
+#[inline(always)]
 fn adc(state: &mut data_types::State8080, src: data_types::Register) {
     let val = match src {
         data_types::Register::A => state.a,
@@ -581,6 +605,7 @@ fn adc(state: &mut data_types::State8080, src: data_types::Register) {
     state.pc += 1;
 }
 
+#[inline(always)]
 fn sub(state: &mut data_types::State8080, src: data_types::Register) {
     let val = match src {
         data_types::Register::A => state.a,
@@ -605,10 +630,31 @@ fn sub(state: &mut data_types::State8080, src: data_types::Register) {
     state.pc += 1;
 }
 
+#[inline(always)]
 fn sbb(state: &mut data_types::State8080, src: data_types::Register) {
-    unimplemented_instruction(state.memory[state.pc as usize]);
+    let val = match src {
+        data_types::Register::A => state.a,
+        data_types::Register::B => state.b,
+        data_types::Register::C => state.c,
+        data_types::Register::D => state.d,
+        data_types::Register::E => state.e,
+        data_types::Register::H => state.h,
+        data_types::Register::L => state.l,
+        data_types::Register::M => {
+            let addr = get_memory_address(state);
+            state.memory[addr]
+        }
+    };
+    state.a = state.a.wrapping_sub(val).wrapping_sub(state.cc.cy as u8);
+    state.cc.z = state.a == 0;
+    state.cc.s = (state.a & 0x80) != 0;
+    state.cc.p = parity(state.a);
+    state.cc.cy = state.a < val;
+    state.cc.ac = (state.a & 0x0F) < (val & 0x0F);
+    state.pc += 1;
 }
 
+#[inline(always)]
 fn ana(state: &mut data_types::State8080, src: data_types::Register) {
     let val = match src {
         data_types::Register::A => state.a,
@@ -632,6 +678,7 @@ fn ana(state: &mut data_types::State8080, src: data_types::Register) {
     state.pc += 1;
 }
 
+#[inline(always)]
 fn xra(state: &mut data_types::State8080, src: data_types::Register) {
     let val = match src {
         data_types::Register::A => state.a,
@@ -656,6 +703,7 @@ fn xra(state: &mut data_types::State8080, src: data_types::Register) {
     state.pc += 1;
 }
 
+#[inline(always)]
 fn ora(state: &mut data_types::State8080, src: data_types::Register) {
     let val = match src {
         data_types::Register::A => state.a,
@@ -679,6 +727,7 @@ fn ora(state: &mut data_types::State8080, src: data_types::Register) {
     state.pc += 1;
 }
 
+#[inline(always)]
 fn cmp(state: &mut data_types::State8080, src: data_types::Register) {
     let value = match src {
         data_types::Register::A => state.a,
@@ -704,6 +753,7 @@ fn cmp(state: &mut data_types::State8080, src: data_types::Register) {
     state.pc += 1;
 }
 
+#[inline(always)]
 fn rnz(state: &mut data_types::State8080) {
     if !state.cc.z {
         let return_address = pop_stack(state);
@@ -713,6 +763,7 @@ fn rnz(state: &mut data_types::State8080) {
     }
 }
 
+#[inline(always)]
 fn pop(state: &mut data_types::State8080, register_pair: data_types::RegisterPair) {
     let low = state.memory[state.sp as usize];
     let high = state.memory[(state.sp + 1) as usize];
@@ -741,6 +792,7 @@ fn pop(state: &mut data_types::State8080, register_pair: data_types::RegisterPai
     state.pc += 1;
 }
 
+#[inline(always)]
 fn jnz(state: &mut data_types::State8080) {
     if !state.cc.z {
         state.pc = get_jmp_target_address(state); // Jump if Zero flag is clear
@@ -749,10 +801,12 @@ fn jnz(state: &mut data_types::State8080) {
     }
 }
 
+#[inline(always)]
 fn jmp(state: &mut data_types::State8080) {
     state.pc = get_jmp_target_address(state);
 }
 
+#[inline(always)]
 fn cnz(state: &mut data_types::State8080) {
     // also need to double check
     if !state.cc.z {
@@ -762,6 +816,7 @@ fn cnz(state: &mut data_types::State8080) {
     }
 }
 
+#[inline(always)]
 fn push(state: &mut data_types::State8080, register_pair: data_types::RegisterPair) {
     let high: u8;
     let low: u8;
@@ -792,6 +847,7 @@ fn push(state: &mut data_types::State8080, register_pair: data_types::RegisterPa
     state.pc += 1;
 }
 
+#[inline(always)]
 fn adi(state: &mut data_types::State8080) {
     // ADI instruction add next immediate value in memory (from what i understand)
     let answer: u16 = state.a as u16 + state.memory[(state.pc + 1) as usize] as u16;
@@ -800,10 +856,16 @@ fn adi(state: &mut data_types::State8080) {
     state.pc += 2;
 }
 
+#[inline(always)]
 fn rst(state: &mut data_types::State8080, num: u8) {
-    unimplemented_instruction(state.memory[state.pc as usize]);
+    let return_address = state.pc + 1;
+    state.memory[(state.sp - 1) as usize] = ((return_address >> 8) & 0xff) as u8; // High byte
+    state.memory[(state.sp - 2) as usize] = (return_address & 0xff) as u8; // Low byte
+    state.sp -= 2;
+    state.pc = num as u16 * 8;
 }
 
+#[inline(always)]
 fn rz(state: &mut data_types::State8080) {
     if state.cc.z == true {
         let return_address = pop_stack(state);
@@ -813,6 +875,7 @@ fn rz(state: &mut data_types::State8080) {
     }
 }
 
+#[inline(always)]
 fn ret(state: &mut data_types::State8080) {
     let low = state.memory[state.sp as usize] as u16;
     let high = state.memory[(state.sp + 1) as usize] as u16;
@@ -820,6 +883,7 @@ fn ret(state: &mut data_types::State8080) {
     state.sp += 2;
 }
 
+#[inline(always)]
 fn jz(state: &mut data_types::State8080) {
     let addr = get_jmp_target_address(state);
     if state.cc.z {
@@ -829,6 +893,7 @@ fn jz(state: &mut data_types::State8080) {
     }
 }
 
+#[inline(always)]
 fn cz(state: &mut data_types::State8080) {
     if state.cc.z {
         call(state);
@@ -837,6 +902,7 @@ fn cz(state: &mut data_types::State8080) {
     }
 }
 
+#[inline(always)]
 fn call(state: &mut data_types::State8080) {
     let addr = get_jmp_target_address(state);
     let ret_addr = state.pc + 3; // Address after CALL
@@ -846,10 +912,12 @@ fn call(state: &mut data_types::State8080) {
     state.pc = addr; // Jump to the target address
 }
 
+#[inline(always)]
 fn aci(state: &mut data_types::State8080) {
     unimplemented_instruction(state.memory[state.pc as usize]);
 }
 
+#[inline(always)]
 fn rnc(state: &mut data_types::State8080) {
     if !state.cc.cy {
         let return_address = pop_stack(state);
@@ -859,6 +927,7 @@ fn rnc(state: &mut data_types::State8080) {
     }
 }
 
+#[inline(always)]
 fn out(state: &mut data_types::State8080) {
     // TODO: examine this instruction
     let port = state.memory[(state.pc + 1) as usize];
@@ -867,6 +936,7 @@ fn out(state: &mut data_types::State8080) {
     state.pc += 2;
 }
 
+#[inline(always)]
 fn cnc(state: &mut data_types::State8080) {
     if !state.cc.cy {
         call(state);
@@ -875,6 +945,7 @@ fn cnc(state: &mut data_types::State8080) {
     }
 }
 
+#[inline(always)]
 fn jnc(state: &mut data_types::State8080) {
     let addr = get_jmp_target_address(state);
     if !state.cc.cy {
@@ -884,6 +955,7 @@ fn jnc(state: &mut data_types::State8080) {
     }
 }
 
+#[inline(always)]
 fn sui(state: &mut data_types::State8080) {
     let imm = state.memory[(state.pc + 1) as usize];
     let result = state.a.wrapping_sub(imm);
@@ -895,6 +967,7 @@ fn sui(state: &mut data_types::State8080) {
     state.pc += 2;
 }
 
+#[inline(always)]
 fn rc(state: &mut data_types::State8080) {
     if state.cc.cy {
         let return_address = pop_stack(state);
@@ -904,6 +977,7 @@ fn rc(state: &mut data_types::State8080) {
     }
 }
 
+#[inline(always)]
 fn jc(state: &mut data_types::State8080) {
     let addr = get_jmp_target_address(state);
     if state.cc.cy {
@@ -913,6 +987,7 @@ fn jc(state: &mut data_types::State8080) {
     }
 }
 
+#[inline(always)]
 fn inp(state: &mut data_types::State8080) {
     let port = state.memory[(state.pc + 1) as usize];
     state.a = handle_in(state, port);
@@ -920,10 +995,12 @@ fn inp(state: &mut data_types::State8080) {
     state.pc += 2;
 }
 
+#[inline(always)]
 fn cc(state: &mut data_types::State8080) {
     unimplemented_instruction(state.memory[state.pc as usize]);
 }
 
+#[inline(always)]
 fn sbi(state: &mut data_types::State8080) {
     let imm = state.memory[(state.pc + 1) as usize];
     let borrow = if state.cc.cy { 1 } else { 0 };
@@ -938,10 +1015,12 @@ fn sbi(state: &mut data_types::State8080) {
     state.pc += 2; // Increment the program counter by 2 because `SBI` uses the immediate value
 }
 
+#[inline(always)]
 fn rpo(state: &mut data_types::State8080) {
     unimplemented_instruction(state.memory[state.pc as usize]);
 }
 
+#[inline(always)]
 fn xthl(state: &mut data_types::State8080) {
     let temp_l = state.l;
     let temp_h = state.h;
@@ -952,10 +1031,12 @@ fn xthl(state: &mut data_types::State8080) {
     state.pc += 1;
 }
 
+#[inline(always)]
 fn cpo(state: &mut data_types::State8080) {
     unimplemented_instruction(state.memory[state.pc as usize]);
 }
 
+#[inline(always)]
 fn ani(state: &mut data_types::State8080) {
     let imm = state.memory[(state.pc + 1) as usize];
     state.a &= imm;
@@ -966,18 +1047,22 @@ fn ani(state: &mut data_types::State8080) {
     state.pc += 2;
 }
 
+#[inline(always)]
 fn rpe(state: &mut data_types::State8080) {
     unimplemented_instruction(state.memory[state.pc as usize]);
 }
 
+#[inline(always)]
 fn pchl(state: &mut data_types::State8080) {
     state.pc = get_hl(state);
 }
 
+#[inline(always)]
 fn jpe(state: &mut data_types::State8080) {
     unimplemented_instruction(state.memory[state.pc as usize]);
 }
 
+#[inline(always)]
 fn xchg(state: &mut data_types::State8080) {
     let temp_d = state.d;
     let temp_e = state.e;
@@ -988,18 +1073,22 @@ fn xchg(state: &mut data_types::State8080) {
     state.pc += 1;
 }
 
+#[inline(always)]
 fn cpe(state: &mut data_types::State8080) {
     unimplemented_instruction(state.memory[state.pc as usize]);
 }
 
+#[inline(always)]
 fn xri(state: &mut data_types::State8080) {
     unimplemented_instruction(state.memory[state.pc as usize]);
 }
 
+#[inline(always)]
 fn rp(state: &mut data_types::State8080) {
     unimplemented_instruction(state.memory[state.pc as usize]);
 }
 
+#[inline(always)]
 fn pop_psw(state: &mut data_types::State8080) {
     let flags_byte = state.memory[state.sp as usize]; // Pop Flags
     let accumulator = state.memory[(state.sp + 1) as usize]; // Pop Accumulator
@@ -1009,18 +1098,22 @@ fn pop_psw(state: &mut data_types::State8080) {
     state.pc += 1;
 }
 
+#[inline(always)]
 fn jp(state: &mut data_types::State8080) {
     unimplemented_instruction(state.memory[state.pc as usize]);
 }
 
+#[inline(always)]
 fn di(state: &mut data_types::State8080) {
     unimplemented_instruction(state.memory[state.pc as usize]);
 }
 
+#[inline(always)]
 fn cp(state: &mut data_types::State8080) {
     unimplemented_instruction(state.memory[state.pc as usize]);
 }
 
+#[inline(always)]
 fn push_psw(state: &mut data_types::State8080) {
     // The flags are packed into one byte
     let flags_byte = state.get_flags_as_byte();
@@ -1030,6 +1123,7 @@ fn push_psw(state: &mut data_types::State8080) {
     state.pc += 1;
 }
 
+#[inline(always)]
 fn ori(state: &mut data_types::State8080) {
     let x = state.memory[(state.pc + 1) as usize] | state.a;
     flags_zsp(state, x);
@@ -1038,14 +1132,17 @@ fn ori(state: &mut data_types::State8080) {
     state.pc += 2;
 }
 
+#[inline(always)]
 fn rm(state: &mut data_types::State8080) {
     unimplemented_instruction(state.memory[state.pc as usize]);
 }
 
+#[inline(always)]
 fn sphl(state: &mut data_types::State8080) {
     unimplemented_instruction(state.memory[state.pc as usize]);
 }
 
+#[inline(always)]
 fn jm(state: &mut data_types::State8080) {
     if state.cc.s {
         state.pc = get_jmp_target_address(state);
@@ -1054,15 +1151,18 @@ fn jm(state: &mut data_types::State8080) {
     }
 }
 
+#[inline(always)]
 fn ei(state: &mut data_types::State8080) {
     state.int_enable = true; // Enable interrupts
     state.pc += 1;
 }
 
+#[inline(always)]
 fn cm(state: &mut data_types::State8080) {
     unimplemented_instruction(state.memory[state.pc as usize]);
 }
 
+#[inline(always)]
 fn cpi(state: &mut data_types::State8080) {
     let imm = state.memory[(state.pc + 1) as usize];
     let result = state.a.wrapping_sub(imm);
@@ -1073,11 +1173,12 @@ fn cpi(state: &mut data_types::State8080) {
     state.pc += 2;
 }
 
+#[inline(always)]
 fn jpo(state: &mut data_types::State8080) {
     unimplemented_instruction(state.memory[state.pc as usize]);
 }
 
-#[inline]
+#[inline(always)]
 fn set_flag_add(state: &mut data_types::State8080, res: u16) {
     state.cc.z = (res & 0xff) == 0;
     state.cc.s = (res & 0x80) != 0;
@@ -1085,17 +1186,17 @@ fn set_flag_add(state: &mut data_types::State8080, res: u16) {
     state.cc.p = parity((res & 0xff) as u8);
 }
 
-#[inline]
+#[inline(always)]
 fn parity(value: u8) -> bool {
     value.count_ones() % 2 == 0
 }
 
-#[inline]
+#[inline(always)]
 fn get_memory_address(state: &mut data_types::State8080) -> usize {
     (((state.h as u16) << 8) | (state.l as u16)) as usize
 }
 
-#[inline]
+#[inline(always)]
 fn set_flags_dcr(state: &mut data_types::State8080, value_before: u8, result: u8) {
     // Zero Flag
     state.cc.z = result == 0;
@@ -1112,7 +1213,7 @@ fn set_flags_dcr(state: &mut data_types::State8080, value_before: u8, result: u8
     // Carry Flag is not affected
 }
 
-#[inline]
+#[inline(always)]
 fn get_register_pair_value(
     state: &data_types::State8080,
     register_pair: &data_types::RegisterPair,
@@ -1126,7 +1227,7 @@ fn get_register_pair_value(
     }
 }
 
-#[inline]
+#[inline(always)]
 fn set_register_pair_value(
     state: &mut data_types::State8080,
     register_pair: &data_types::RegisterPair,
@@ -1141,55 +1242,56 @@ fn set_register_pair_value(
     }
 }
 
-#[inline]
+#[inline(always)]
 fn get_bc(state: &data_types::State8080) -> u16 {
     ((state.b as u16) << 8) | (state.c as u16)
 }
 
-#[inline]
+#[inline(always)]
 fn get_de(state: &data_types::State8080) -> u16 {
     ((state.d as u16) << 8) | (state.e as u16)
 }
 
-#[inline]
+#[inline(always)]
 fn get_hl(state: &data_types::State8080) -> u16 {
     ((state.h as u16) << 8) | (state.l as u16)
 }
 
-#[inline]
+#[inline(always)]
 fn get_sp(state: &data_types::State8080) -> u16 {
     state.sp
 }
 
-#[inline]
+#[inline(always)]
 fn set_bc(state: &mut data_types::State8080, value: u16) {
     state.b = (value >> 8) as u8;
     state.c = value as u8;
 }
 
-#[inline]
+#[inline(always)]
 fn set_de(state: &mut data_types::State8080, value: u16) {
     state.d = (value >> 8) as u8;
     state.e = value as u8;
 }
 
-#[inline]
+#[inline(always)]
 fn set_hl(state: &mut data_types::State8080, value: u16) {
     state.h = (value >> 8) as u8;
     state.l = value as u8;
 }
 
-#[inline]
+#[inline(always)]
 fn set_sp(state: &mut data_types::State8080, value: u16) {
     state.sp = value;
 }
 
-#[inline]
+#[inline(always)]
 fn get_jmp_target_address(state: &data_types::State8080) -> u16 {
     (state.memory[(state.pc + 2) as usize] as u16) << 8
         | state.memory[(state.pc + 1) as usize] as u16
 }
 
+#[inline(always)]
 fn handle_in(state: &mut data_types::State8080, port: u8) -> u8 {
     match port {
         0 => 0xf,
@@ -1207,6 +1309,7 @@ fn handle_in(state: &mut data_types::State8080, port: u8) -> u8 {
     }
 }
 
+#[inline(always)]
 fn handle_out(state: &mut data_types::State8080, port: u8, value: u8) {
     match port {
         2 => {
@@ -1224,6 +1327,7 @@ fn handle_out(state: &mut data_types::State8080, port: u8, value: u8) {
     }
 }
 
+#[inline(always)]
 pub fn generate_interrupt(state: &mut data_types::State8080, interrupt_num: u16) {
     // Only generate the interrupt if interrupts are enabled
     if state.int_enable {
