@@ -438,7 +438,10 @@ fn rrc(state: &mut data_types::State8080) {
 
 #[inline(always)]
 fn ral(state: &mut data_types::State8080) {
-    unimplemented_instruction(state.memory[state.pc as usize]);
+    let x = state.a;
+    state.a = (x << 1) | (state.cc.cy as u8);
+    state.cc.cy = (x & 0x80) == 0x80;
+    state.pc += 1;
 }
 
 #[inline(always)]
@@ -524,7 +527,8 @@ fn lda(state: &mut data_types::State8080) {
 
 #[inline(always)]
 fn cmc(state: &mut data_types::State8080) {
-    unimplemented_instruction(state.memory[state.pc as usize]);
+    state.cc.cy = !state.cc.cy;
+    state.pc += 1;
 }
 
 #[inline(always)]
@@ -914,7 +918,15 @@ fn call(state: &mut data_types::State8080) {
 
 #[inline(always)]
 fn aci(state: &mut data_types::State8080) {
-    unimplemented_instruction(state.memory[state.pc as usize]);
+    let imm = state.memory[(state.pc + 1) as usize];
+    let carry = if state.cc.cy { 1 } else { 0 };
+    let result = state.a.wrapping_add(imm).wrapping_add(carry);
+    state.cc.z = result == 0;
+    state.cc.s = (result & 0x80) != 0;
+    state.cc.p = parity(result);
+    state.cc.cy = (state.a as u16) + (imm as u16) + (carry as u16) > 0xFF;
+    state.a = result;
+    state.pc += 2;
 }
 
 #[inline(always)]
@@ -997,7 +1009,11 @@ fn inp(state: &mut data_types::State8080) {
 
 #[inline(always)]
 fn cc(state: &mut data_types::State8080) {
-    unimplemented_instruction(state.memory[state.pc as usize]);
+    if state.cc.cy {
+        call(state);
+    } else {
+        state.pc += 3;
+    }
 }
 
 #[inline(always)]
@@ -1017,7 +1033,12 @@ fn sbi(state: &mut data_types::State8080) {
 
 #[inline(always)]
 fn rpo(state: &mut data_types::State8080) {
-    unimplemented_instruction(state.memory[state.pc as usize]);
+    if !state.cc.p {
+        let return_address = pop_stack(state);
+        state.pc = return_address;
+    } else {
+        state.pc += 1;
+    }
 }
 
 #[inline(always)]
@@ -1033,7 +1054,11 @@ fn xthl(state: &mut data_types::State8080) {
 
 #[inline(always)]
 fn cpo(state: &mut data_types::State8080) {
-    unimplemented_instruction(state.memory[state.pc as usize]);
+    if !state.cc.p {
+        call(state);
+    } else {
+        state.pc += 3;
+    }
 }
 
 #[inline(always)]
@@ -1049,7 +1074,12 @@ fn ani(state: &mut data_types::State8080) {
 
 #[inline(always)]
 fn rpe(state: &mut data_types::State8080) {
-    unimplemented_instruction(state.memory[state.pc as usize]);
+    if state.cc.p {
+        let return_address = pop_stack(state);
+        state.pc = return_address;
+    } else {
+        state.pc += 1;
+    }
 }
 
 #[inline(always)]
@@ -1059,7 +1089,11 @@ fn pchl(state: &mut data_types::State8080) {
 
 #[inline(always)]
 fn jpe(state: &mut data_types::State8080) {
-    unimplemented_instruction(state.memory[state.pc as usize]);
+    if state.cc.p {
+        state.pc = get_jmp_target_address(state);
+    } else {
+        state.pc += 3;
+    }
 }
 
 #[inline(always)]
@@ -1075,17 +1109,30 @@ fn xchg(state: &mut data_types::State8080) {
 
 #[inline(always)]
 fn cpe(state: &mut data_types::State8080) {
-    unimplemented_instruction(state.memory[state.pc as usize]);
+    if state.cc.p {
+        call(state);
+    } else {
+        state.pc += 3;
+    }
 }
 
 #[inline(always)]
 fn xri(state: &mut data_types::State8080) {
-    unimplemented_instruction(state.memory[state.pc as usize]);
+    let imm = state.memory[(state.pc + 1) as usize];
+    state.a ^= imm;
+    flags_zsp(state, state.a);
+    state.cc.cy = false;
+    state.pc += 2;
 }
 
 #[inline(always)]
 fn rp(state: &mut data_types::State8080) {
-    unimplemented_instruction(state.memory[state.pc as usize]);
+    if !state.cc.s {
+        let return_address = pop_stack(state);
+        state.pc = return_address;
+    } else {
+        state.pc += 1;
+    }
 }
 
 #[inline(always)]
@@ -1100,17 +1147,26 @@ fn pop_psw(state: &mut data_types::State8080) {
 
 #[inline(always)]
 fn jp(state: &mut data_types::State8080) {
-    unimplemented_instruction(state.memory[state.pc as usize]);
+    if state.cc.s {
+        state.pc = get_jmp_target_address(state);
+    } else {
+        state.pc += 3;
+    }
 }
 
 #[inline(always)]
 fn di(state: &mut data_types::State8080) {
-    unimplemented_instruction(state.memory[state.pc as usize]);
+    state.int_enable = false;
+    state.pc += 1;
 }
 
 #[inline(always)]
 fn cp(state: &mut data_types::State8080) {
-    unimplemented_instruction(state.memory[state.pc as usize]);
+    if state.cc.s {
+        call(state);
+    } else {
+        state.pc += 3;
+    }
 }
 
 #[inline(always)]
@@ -1134,12 +1190,18 @@ fn ori(state: &mut data_types::State8080) {
 
 #[inline(always)]
 fn rm(state: &mut data_types::State8080) {
-    unimplemented_instruction(state.memory[state.pc as usize]);
+    if state.cc.s {
+        state.pc += 1;
+    } else {
+        let return_address = pop_stack(state);
+        state.pc = return_address;
+    }
 }
 
 #[inline(always)]
 fn sphl(state: &mut data_types::State8080) {
-    unimplemented_instruction(state.memory[state.pc as usize]);
+    state.sp = get_hl(state);
+    state.pc += 1;
 }
 
 #[inline(always)]
@@ -1159,7 +1221,11 @@ fn ei(state: &mut data_types::State8080) {
 
 #[inline(always)]
 fn cm(state: &mut data_types::State8080) {
-    unimplemented_instruction(state.memory[state.pc as usize]);
+    if state.cc.s {
+        call(state);
+    } else {
+        state.pc += 3;
+    }
 }
 
 #[inline(always)]
@@ -1175,7 +1241,11 @@ fn cpi(state: &mut data_types::State8080) {
 
 #[inline(always)]
 fn jpo(state: &mut data_types::State8080) {
-    unimplemented_instruction(state.memory[state.pc as usize]);
+    if !state.cc.p {
+        state.pc = get_jmp_target_address(state);
+    } else {
+        state.pc += 3;
+    }
 }
 
 #[inline(always)]

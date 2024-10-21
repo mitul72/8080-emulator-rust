@@ -46,7 +46,7 @@ fn main() {
         // this starts emulation per 33000 cycles
         let frame_start = Instant::now();
         invaders.start_emulation();
-        // draw_screen(&mut canvas, &invaders.get_memory());
+        draw_screen(&mut canvas, &invaders.get_memory());
         frame_count += 1;
         if last_time.elapsed() >= Duration::new(1, 0) {
             println!("FPS: {}", frame_count);
