@@ -22,7 +22,25 @@ impl SpaceInvadersMachine {
             paused: false,
         };
         // Initialize ROM by loading files
-        machine.read_file_into_memory("roms/space_invaders/invaders", 0);
+        machine.read_multiple_files_into_memory(
+            vec![
+                "roms/space_invaders/invaders.h",
+                "roms/space_invaders/invaders.g",
+                "roms/space_invaders/invaders.f",
+                "roms/space_invaders/invaders.e",
+            ],
+            0,
+        );
+        // machine.read_multiple_files_into_memory(
+        //     vec![
+        //         "roms/gunfight/7609h.bin",
+        //         "roms/gunfight/7609g.bin",
+        //         "roms/gunfight/7609f.bin",
+        //         "roms/gunfight/7609e.bin",
+        //     ],
+        //     0,
+        // );
+        // machine.read_file_into_memory("roms/space_invaders/invaders", 0);
         machine
     }
 
@@ -30,6 +48,17 @@ impl SpaceInvadersMachine {
         // Implement loading binary file data into memory starting at 'offset'
         let rom = std::fs::read(filename).expect(&format!("Failed to load {}", filename));
         self.cpu.state.memory[offset..offset + rom.len()].copy_from_slice(&rom[..]);
+    }
+
+    fn read_multiple_files_into_memory(&mut self, filenames: Vec<&str>, offset: usize) {
+        // Implement loading multiple binary files into memory starting at 'offset'
+        let mut current_offset = offset;
+        for filename in filenames {
+            let rom = std::fs::read(filename).expect(&format!("Failed to load {}", filename));
+            self.cpu.state.memory[current_offset..current_offset + rom.len()]
+                .copy_from_slice(&rom[..]);
+            current_offset += rom.len();
+        }
     }
 
     pub fn get_framebuffer(&self) -> &[u8] {

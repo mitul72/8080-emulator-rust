@@ -9,8 +9,12 @@ use std::time::Instant;
 pub mod disassembler;
 pub mod utils;
 
-const SCREEN_WIDTH: u32 = 224 * 2;
-const SCREEN_HEIGHT: u32 = 256 * 2;
+const SCALE_FACTOR: u32 = 2;
+const SCREEN_WIDTH: u32 = 224 * SCALE_FACTOR;
+const SCREEN_HEIGHT: u32 = 256 * SCALE_FACTOR;
+const VIDEO_MEM_START: usize = 0x2400;
+const VIDEO_MEM_END: usize = 0x4000;
+
 // const PIXEL_SIZE: u32 = 2;
 
 // TODO: Run with cargo clippy -- -W clippy::pedantic
@@ -112,15 +116,8 @@ fn draw_screen(canvas: &mut Canvas<Window>, memory: &[u8]) {
     canvas.set_draw_color(Color::BLACK);
     canvas.clear();
 
-    // Video memory starts at 0x2400
-    let video_mem_start = 0x2400;
-    let video_mem_end = 0x4000; // 0x3FFF + 1
-
-    // Scaling factor for the screen (since you doubled the dimensions)
-    let scale_factor: u32 = 2; // You doubled both width and height, so scale factor is 2
-
     // Loop over each byte in video memory
-    for addr in video_mem_start..video_mem_end {
+    for addr in VIDEO_MEM_START..VIDEO_MEM_END {
         let byte = memory[addr];
 
         // Each byte represents 8 vertical pixels
@@ -129,27 +126,26 @@ fn draw_screen(canvas: &mut Canvas<Window>, memory: &[u8]) {
 
             if pixel_on != 0 {
                 // Calculate the x and y coordinates (rotated for Space Invaders)
-                let pixel_index = (addr - video_mem_start) * 8 + bit;
+                let pixel_index = (addr - VIDEO_MEM_START) * 8 + bit;
                 let x = (pixel_index % 256) as u32;
                 let y = (pixel_index / 256) as u32;
 
                 // Scale the coordinates to fit the doubled screen size
-                let scaled_x = (224u32.wrapping_sub(x)).wrapping_mul(scale_factor);
-                let scaled_y = y.wrapping_mul(scale_factor);
+                let scaled_x = (256 - x).wrapping_mul(SCALE_FACTOR);
+                let scaled_y = y.wrapping_mul(SCALE_FACTOR);
 
                 // Draw a scaled rectangle to represent the pixel
                 canvas.set_draw_color(Color::WHITE);
                 let rect = Rect::new(
                     scaled_y as i32,
                     scaled_x as i32,
-                    scale_factor, // Width of the rectangle (scaled pixel)
-                    scale_factor, // Height of the rectangle (scaled pixel)
+                    SCALE_FACTOR, // Width of the rectangle (scaled pixel)
+                    SCALE_FACTOR, // Height of the rectangle (scaled pixel)
                 );
                 canvas.fill_rect(rect).unwrap();
             }
         }
     }
 
-    // Update the canvas
     canvas.present();
 }
