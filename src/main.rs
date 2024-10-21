@@ -1,21 +1,13 @@
 extern crate sdl2;
-use heapless::spsc;
-use intel_8080_emu_rust::emulator::cpu::generate_interrupt;
 use intel_8080_emu_rust::emulator::machine::SpaceInvadersMachine;
-use intel_8080_emu_rust::emulator::{cpu, machine};
-use sdl2::pixels::PixelFormatEnum;
 use sdl2::render::Canvas;
 use sdl2::video::Window;
-use sdl2::{event::Event, keyboard::Keycode, pixels::Color, rect::Rect};
-use std::thread::sleep;
+use sdl2::{event::Event, pixels::Color, rect::Rect};
+use std::time::Duration;
 use std::time::Instant;
-use std::{thread, time::Duration};
 
 pub mod disassembler;
 pub mod utils;
-
-const RGB_ON: u32 = 0xFFFFFFFF; // White
-const RGB_OFF: u32 = 0x00000000; // Black
 
 const SCREEN_WIDTH: u32 = 224 * 2;
 const SCREEN_HEIGHT: u32 = 256 * 2;
@@ -37,13 +29,12 @@ fn main() {
         .position_centered()
         .build()
         .unwrap();
-
+    let mut last_time = Instant::now();
+    let mut frame_count = 0;
     let mut canvas = window.into_canvas().build().unwrap();
-    let texture_creator = canvas.texture_creator();
     let mut event_pump = sdl_context.event_pump().unwrap();
-    let mut texture = texture_creator
-        .create_texture_streaming(PixelFormatEnum::RGB888, 224, 256)
-        .unwrap();
+    let target_fps = 120;
+    let frame_duration = Duration::from_millis(1000 / target_fps);
 
     // let producer_thread = thread::spawn(move || loop {
     //     invaders.start_emulation();
@@ -53,51 +44,44 @@ fn main() {
 
     'running: loop {
         // this starts emulation per 33000 cycles
+        let frame_start = Instant::now();
         invaders.start_emulation();
-        draw_screen(&mut canvas, &invaders.get_memory());
+        // draw_screen(&mut canvas, &invaders.get_memory());
+        frame_count += 1;
+        if last_time.elapsed() >= Duration::new(1, 0) {
+            println!("FPS: {}", frame_count);
+            frame_count = 0;
+            last_time = Instant::now();
+        }
+
         for event in event_pump.poll_iter() {
             match event {
                 Event::Quit { .. } => break 'running,
                 Event::KeyDown {
-                    keycode: Some(Keycode::Space),
+                    keycode: Some(Keycode),
                     ..
                 } => {
+                    invaders.handle_key_down(Keycode);
                     // this will generate an interrupt
                     // generate_interrupt(&mut invaders, 1);
+                }
+                Event::KeyUp {
+                    keycode: Some(Keycode),
+                    ..
+                } => {
+                    invaders.handle_key_up(Keycode);
                 }
                 _ => {}
             }
         }
 
-        // texture
-        //     .with_lock(None, |buffer: &mut [u8], _pitch: usize| {
-        //         let framebuffer = invaders.get_framebuffer();
-        //         for i in 0..224 {
-        //             for j in (0..256).step_by(8) {
-        //                 let pix = framebuffer[(i * 256 / 8) + j / 8];
-        //                 for p in 0..8 {
-        //                     let color = if pix & (1 << p) != 0 { RGB_ON } else { RGB_OFF };
-        //                     let offset = (255 - j) * 224 * 4 + i * 4; // Flip image vertically
-        //                     buffer[offset..offset + 4].copy_from_slice(&color.to_ne_bytes());
-        //                 }
-        //             }
-        //         }
-        //     })
-        //     .unwrap();
-
-        // canvas.clear();
-        // canvas
-        //     .copy(&texture, None, Some(Rect::new(0, 0, 224, 256)))
-        //     .unwrap();
-        // canvas.present();
-        // canvas.clear();
-        // canvas
-        //     .copy(&texture, None, Some(Rect::new(0, 0, 224, 256)))
-        //     .unwrap();
-        // canvas.present();
+        let frame_time = frame_start.elapsed();
+        if frame_time < frame_duration {
+            std::thread::sleep(frame_duration - frame_time);
+        }
 
         // // 16ms delay to achieve 60fps
-        // std::thread::sleep(Duration::from_millis(16));
+        // std::thread::sleep(Duration::from_millis(1));
     }
 
     // let (tx, rx) = channel();
@@ -122,40 +106,6 @@ fn main() {
     // rx.recv().unwrap();
 
     // Game loop
-    // 'running: loop {
-    //     for event in event_pump.poll_iter() {
-    //         match event {
-    //             Event::Quit { .. } => break 'running,
-    //             _ => {}
-    //         }
-    //     }
-
-    //     // Update screen with framebuffer data
-    //     // texture
-    //     //     .with_lock(None, |buffer: &mut [u8], _pitch: usize| {
-    //     //         let framebuffer = invaders.get_framebuffer();
-    //     //         for i in 0..224 {
-    //     //             for j in (0..256).step_by(8) {
-    //     //                 let pix = framebuffer[(i * 256 / 8) + j / 8];
-    //     //                 for p in 0..8 {
-    //     //                     let color = if pix & (1 << p) != 0 { RGB_ON } else { RGB_OFF };
-    //     //                     let offset = (255 - j) * 224 * 4 + i * 4; // Flip image vertically
-    //     //                     buffer[offset..offset + 4].copy_from_slice(&color.to_ne_bytes());
-    //     //                 }
-    //     //             }
-    //     //         }
-    //     //     })
-    //     //     .unwrap();
-
-    //     canvas.clear();
-    //     canvas
-    //         .copy(&texture, None, Some(Rect::new(0, 0, 224, 256)))
-    //         .unwrap();
-    //     canvas.present();
-
-    //     // 16ms delay to achieve 60fps
-    //     ::std::thread::sleep(Duration::from_millis(16));
-    // }
 }
 
 fn draw_screen(canvas: &mut Canvas<Window>, memory: &[u8]) {

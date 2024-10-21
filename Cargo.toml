@@ -3,8 +3,15 @@ name = "intel-8080-emu-rust"
 version = "0.1.0"
 edition = "2021"
 
+build = "build.rs"
+
 [dependencies]
+criterion = "0.5.1"
 heapless = "0.8.0"
 image = "0.25.3"
 rustc-hash = "2.0.0"
 sdl2 = { version = "0.37.0", features = ["image"] }
+
+[[bench]]
+name = "benchmarks"
+harness = false

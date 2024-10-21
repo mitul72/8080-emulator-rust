@@ -98,7 +98,7 @@ pub fn emulate_8080_op(state: &mut data_types::State8080) -> u8 {
         0x31 => lxi(state, data_types::RegisterPair::SP),
         0x32 => sta(state),
         0x33 => inx(state, &data_types::RegisterPair::SP),
-        0x34 => inr_m(state),
+        0x34 => inr(state, data_types::Register::M),
         0x35 => dcr_m(state),
         0x36 => mvi_m(state),
         0x37 => stc(state),
@@ -234,6 +234,7 @@ pub fn emulate_8080_op(state: &mut data_types::State8080) -> u8 {
     return CYCLE_TABLE[op_code as usize];
 }
 
+#[inline]
 fn nop(state: &mut data_types::State8080) {
     // No operation
     state.pc += 1;
@@ -259,7 +260,7 @@ fn lxi(state: &mut data_types::State8080, register_pair: data_types::RegisterPai
             state.sp = ((high as u16) << 8) | (low as u16);
         }
         data_types::RegisterPair::PSW => {
-            println!("PSW line called in lxi instruction");
+            panic!("PSW line called in lxi instruction");
         }
     }
     state.pc += 3;
@@ -446,7 +447,17 @@ fn shld(state: &mut data_types::State8080) {
 }
 
 fn daa(state: &mut data_types::State8080) {
-    unimplemented_instruction(state.memory[state.pc as usize]);
+    let mut temp: u16 = state.a as u16;
+    if state.cc.ac || (temp & 0x0F) > 9 {
+        temp = temp.wrapping_add(6);
+    }
+    if state.cc.cy || temp > 0x9F {
+        temp = temp.wrapping_add(0x60);
+        state.cc.cy = true;
+    }
+    state.a = (temp & 0xFF) as u8;
+    set_flags_daa(state, temp);
+    state.pc += 1;
 }
 
 fn lhld(state: &mut data_types::State8080) {
@@ -457,16 +468,13 @@ fn lhld(state: &mut data_types::State8080) {
 }
 
 fn cma(state: &mut data_types::State8080) {
-    unimplemented_instruction(state.memory[state.pc as usize]);
+    state.a = !state.a;
+    state.pc += 1;
 }
 
 fn sta(state: &mut data_types::State8080) {
     state.memory[get_jmp_target_address(state) as usize] = state.a;
     state.pc += 3;
-}
-
-fn inr_m(state: &mut data_types::State8080) {
-    unimplemented_instruction(state.memory[state.pc as usize]);
 }
 
 fn dcr_m(state: &mut data_types::State8080) {
@@ -554,11 +562,47 @@ fn add(state: &mut data_types::State8080, src: data_types::Register) {
 }
 
 fn adc(state: &mut data_types::State8080, src: data_types::Register) {
-    unimplemented_instruction(state.memory[state.pc as usize]);
+    let val = match src {
+        data_types::Register::A => state.a,
+        data_types::Register::B => state.b,
+        data_types::Register::C => state.c,
+        data_types::Register::D => state.d,
+        data_types::Register::E => state.e,
+        data_types::Register::H => state.h,
+        data_types::Register::L => state.l,
+        data_types::Register::M => {
+            let addr = get_memory_address(state);
+            state.memory[addr]
+        }
+    };
+    let answer = state.a as u16 + val as u16 + state.cc.cy as u16;
+    set_flags_adc(state, answer);
+    state.a = (answer & 0xff) as u8;
+    state.pc += 1;
 }
 
 fn sub(state: &mut data_types::State8080, src: data_types::Register) {
-    unimplemented_instruction(state.memory[state.pc as usize]);
+    let val = match src {
+        data_types::Register::A => state.a,
+        data_types::Register::B => state.b,
+        data_types::Register::C => state.c,
+        data_types::Register::D => state.d,
+        data_types::Register::E => state.e,
+        data_types::Register::H => state.h,
+        data_types::Register::L => state.l,
+        data_types::Register::M => {
+            let addr = get_memory_address(state);
+            state.memory[addr]
+        }
+    };
+    let result = state.a.wrapping_sub(val);
+    state.cc.z = result == 0;
+    state.cc.s = (result & 0x80) != 0;
+    state.cc.p = parity(result);
+    state.cc.cy = state.a < val;
+    state.cc.ac = (state.a & 0x0F) < (val & 0x0F);
+    state.a = result;
+    state.pc += 1;
 }
 
 fn sbb(state: &mut data_types::State8080, src: data_types::Register) {
@@ -636,7 +680,28 @@ fn ora(state: &mut data_types::State8080, src: data_types::Register) {
 }
 
 fn cmp(state: &mut data_types::State8080, src: data_types::Register) {
-    unimplemented_instruction(state.memory[state.pc as usize]);
+    let value = match src {
+        data_types::Register::A => state.a,
+        data_types::Register::B => state.b,
+        data_types::Register::C => state.c,
+        data_types::Register::D => state.d,
+        data_types::Register::E => state.e,
+        data_types::Register::H => state.h,
+        data_types::Register::L => state.l,
+        data_types::Register::M => {
+            let addr = get_memory_address(state);
+            state.memory[addr]
+        }
+    };
+
+    let result = state.a.wrapping_sub(value);
+
+    state.cc.z = result == 0;
+    state.cc.s = (result & 0x80) != 0;
+    state.cc.p = parity(result);
+    state.cc.cy = state.a < value;
+    state.cc.ac = (state.a & 0x0F) < (value & 0x0F);
+    state.pc += 1;
 }
 
 fn rnz(state: &mut data_types::State8080) {
@@ -798,11 +863,16 @@ fn out(state: &mut data_types::State8080) {
     // TODO: examine this instruction
     let port = state.memory[(state.pc + 1) as usize];
     handle_out(state, port, state.a);
+    // state.out_port3 = port;
     state.pc += 2;
 }
 
 fn cnc(state: &mut data_types::State8080) {
-    unimplemented_instruction(state.memory[state.pc as usize]);
+    if !state.cc.cy {
+        call(state);
+    } else {
+        state.pc += 3;
+    }
 }
 
 fn jnc(state: &mut data_types::State8080) {
@@ -846,6 +916,7 @@ fn jc(state: &mut data_types::State8080) {
 fn inp(state: &mut data_types::State8080) {
     let port = state.memory[(state.pc + 1) as usize];
     state.a = handle_in(state, port);
+    // state.in_port1 = port;
     state.pc += 2;
 }
 
@@ -1121,8 +1192,9 @@ fn get_jmp_target_address(state: &data_types::State8080) -> u16 {
 
 fn handle_in(state: &mut data_types::State8080, port: u8) -> u8 {
     match port {
-        0 => 1,
-        1 => 0,
+        0 => 0xf,
+        1 => state.in_port1,
+        2 => 0,
         3 => {
             // Return result from shift register (shift1 << 8 | shift0) >> shift_offset
             let shift_val = (state.shift1 as u16) << 8 | state.shift0 as u16;
@@ -1198,4 +1270,18 @@ fn flags_zsp(state: &mut data_types::State8080, value: u8) {
     state.cc.z = value == 0;
     state.cc.s = (value & 0x80) != 0;
     state.cc.p = parity(value);
+}
+
+fn set_flags_daa(state: &mut data_types::State8080, result: u16) {
+    state.cc.z = (result & 0xff) == 0;
+    state.cc.s = (result & 0x80) != 0;
+    state.cc.p = parity(result as u8);
+    state.cc.cy = result > 0xff;
+}
+
+fn set_flags_adc(state: &mut data_types::State8080, result: u16) {
+    state.cc.z = (result & 0xff) == 0;
+    state.cc.s = (result & 0x80) != 0;
+    state.cc.p = parity(result as u8);
+    state.cc.cy = result > 0xff;
 }
