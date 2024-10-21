@@ -14,7 +14,7 @@ fn test_cpudiag() {
     let mut cpu = CPU::new();
 
     // Load the cpudiag ROM
-    load_cpudiag(&mut cpu, "roms/cpu_diag/cpudiagFixed.bin");
+    load_cpudiag(&mut cpu, "roms/cpu_diag/cpudiag.bin");
 
     // Set the stack pointer and skip the first instruction
     cpu.state.sp = 0x2400;
