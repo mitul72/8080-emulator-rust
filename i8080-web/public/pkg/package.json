@@ -1,0 +1,17 @@
+{
+  "name": "intel-8080-emu-rust",
+  "type": "module",
+  "version": "0.1.0",
+  "files": [
+    "intel_8080_emu_rust_bg.wasm",
+    "intel_8080_emu_rust.js",
+    "intel_8080_emu_rust_bg.js",
+    "intel_8080_emu_rust.d.ts"
+  ],
+  "main": "intel_8080_emu_rust.js",
+  "types": "intel_8080_emu_rust.d.ts",
+  "sideEffects": [
+    "./intel_8080_emu_rust.js",
+    "./snippets/*"
+  ]
+}
