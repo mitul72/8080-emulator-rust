@@ -6,7 +6,7 @@ import type { Plugin } from 'vite';
 
 const hexLoader: Plugin = {
   name: 'hex-loader',
-  transform(id) {
+  transform(_code, id) {
     const [path, query] = id.split('?');
     if (query !== 'raw-hex') return null;
 
