@@ -3,8 +3,8 @@ import initWasm, {
   SpaceInvadersMachine,
   draw_screen,
   init,
-} from "../../pkg/intel_8080_emu_rust"; // Import the WASM module from the generated pkg folder
-import Rom from "../../roms/space_invaders/invaders?raw-hex";
+} from "../public/pkg/intel_8080_emu_rust"; // Import the WASM module from the generated pkg folder
+import Rom from "../public/roms/space_invaders/invaders?raw-hex";
 
 const Emulator = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
