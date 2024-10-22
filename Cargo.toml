@@ -3,14 +3,40 @@ name = "intel-8080-emu-rust"
 version = "0.1.0"
 edition = "2021"
 
-build = "build.rs"
+[lib]
+name = "intel_8080_emu_rust"
+path = "src/lib.rs"
+crate-type = ["cdylib", "rlib"]
+
+[features]
+wasm = []
 
 [dependencies]
-criterion = "0.5.1"
 heapless = "0.8.0"
-image = "0.25.3"
 rustc-hash = "2.0.0"
+wasm-bindgen = "0.2.95"
+web-sys = { version = "*", features = [
+    "Window",
+    "Document",
+    "CanvasRenderingContext2d",
+    "HtmlCanvasElement",
+] }
+js-sys = "0.3.72"
+console_error_panic_hook = "0.1.7"
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+criterion = "0.3.4"
+image = "0.25.3"
 sdl2 = { version = "0.37.0", features = ["image"] }
+
+[[bin]]
+name = "i8080_emulator"
+path = "src/bin/intel-8080-emulator.rs"
+
+[[bin]]
+name = "wasm_main"
+path = "src/bin/space-invaders-wasm.rs"
+required-features = ["wasm"]
 
 [[bench]]
 name = "benchmarks"

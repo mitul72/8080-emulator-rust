@@ -6,16 +6,11 @@ use sdl2::{event::Event, pixels::Color, rect::Rect};
 use std::time::Duration;
 use std::time::Instant;
 
-pub mod disassembler;
-pub mod utils;
-
 const SCALE_FACTOR: u32 = 2;
 const SCREEN_WIDTH: u32 = 224 * SCALE_FACTOR;
 const SCREEN_HEIGHT: u32 = 256 * SCALE_FACTOR;
 const VIDEO_MEM_START: usize = 0x2400;
 const VIDEO_MEM_END: usize = 0x4000;
-
-// const PIXEL_SIZE: u32 = 2;
 
 // TODO: Run with cargo clippy -- -W clippy::pedantic
 
@@ -40,12 +35,6 @@ fn main() {
     let target_fps = 120;
     let frame_duration = Duration::from_millis(1000 / target_fps);
 
-    // let producer_thread = thread::spawn(move || loop {
-    //     invaders.start_emulation();
-    //     // let framebuffer = invaders.get_framebuffer();
-    //     // producer.enqueue(framebuffer).unwrap();
-    // });
-
     'running: loop {
         // this starts emulation per 33000 cycles
         let frame_start = Instant::now();
@@ -66,8 +55,6 @@ fn main() {
                     ..
                 } => {
                     invaders.handle_key_down(keycode);
-                    // this will generate an interrupt
-                    // generate_interrupt(&mut invaders, 1);
                 }
                 Event::KeyUp {
                     keycode: Some(keycode),
@@ -83,33 +70,7 @@ fn main() {
         if frame_time < frame_duration {
             std::thread::sleep(frame_duration - frame_time);
         }
-
-        // // 16ms delay to achieve 60fps
-        // std::thread::sleep(Duration::from_millis(1));
     }
-
-    // let (tx, rx) = channel();
-
-    // let emulation_thread = thread::spawn(move || {
-    //     invaders.start_emulation();
-    //     loop {
-    //         // Emulate one frame
-    //         invaders.emulate_frame();
-
-    //         // Send the framebuffer to the main thread
-    //         let framebuffer = invaders.get_framebuffer();
-    //         if tx.send(framebuffer).is_err() {
-    //             break;
-    //         }
-
-    //         // Sleep to simulate the frame rate
-    //         thread::sleep(Duration::from_millis(16));
-    //     }
-    // });
-
-    // rx.recv().unwrap();
-
-    // Game loop
 }
 
 fn draw_screen(canvas: &mut Canvas<Window>, memory: &[u8]) {

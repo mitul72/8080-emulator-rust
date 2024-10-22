@@ -1,6 +1,7 @@
 use super::cpu::CPU;
 
 impl CPU {
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn handle_key_down(&mut self, key: sdl2::keyboard::Keycode) {
         match key {
             sdl2::keyboard::Keycode::Left => {
@@ -22,6 +23,7 @@ impl CPU {
         }
     }
 
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn handle_key_up(&mut self, key: sdl2::keyboard::Keycode) {
         match key {
             sdl2::keyboard::Keycode::Left => {

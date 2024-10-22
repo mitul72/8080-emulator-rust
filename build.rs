@@ -7,8 +7,11 @@ fn main() {
     // Append it to the PATH environment variable
     let new_path = format!("{};{}", libs_dir.display(), env::var("PATH").unwrap());
     env::set_var("PATH", new_path);
+    let target = std::env::var("TARGET").unwrap();
 
-    println!("cargo:rustc-link-lib=dylib=SDL2");
+    if !target.contains("wasm32") {
+        println!("cargo:rustc-link-lib=dylib=SDL2");
 
-    println!("cargo:rustc-link-search=native=./libs");
+        println!("cargo:rustc-link-search=native=./libs");
+    }
 }

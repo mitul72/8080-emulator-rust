@@ -1,5 +1,3 @@
-use sdl2::image;
-use sdl2::surface::Surface;
 use std::env;
 use std::fs::File;
 use std::io::Read;
@@ -46,13 +44,14 @@ pub fn get_file_path() -> String {
     return file_path;
 }
 
-pub fn load_icon() -> Surface<'static> {
+#[cfg(not(target_arch = "wasm32"))]
+pub fn load_icon() -> sdl2::surface::Surface<'static> {
     // Initialize SDL2_image
-    let _image_context = image::init(image::InitFlag::JPG).unwrap();
+    let _image_context = sdl2::image::init(sdl2::image::InitFlag::JPG).unwrap();
 
     // Load the icon image
     let icon_path = "src/assets/invaders_mascot.bmp";
-    let icon = match Surface::load_bmp(icon_path) {
+    let icon = match sdl2::surface::Surface::load_bmp(icon_path) {
         Ok(icon) => icon,
         Err(error) => panic!("Problem loading icon: {:?}", error),
     };
