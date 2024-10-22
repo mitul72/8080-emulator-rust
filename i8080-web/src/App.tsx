@@ -8,27 +8,27 @@ import Rom from "../public/roms/space_invaders/invaders?raw-hex";
 
 const Emulator = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  function frame(
-    ctx: CanvasRenderingContext2D | null | undefined,
-    machine: SpaceInvadersMachine
-  ) {
-    // const SCREEN_WIDTH = 224;
-    // const SCREEN_HEIGHT = 256;
-    const SCALE_FACTOR = 2;
+  // function frame(
+  //   ctx: CanvasRenderingContext2D | null | undefined,
+  //   machine: SpaceInvadersMachine
+  // ) {
+  //   // const SCREEN_WIDTH = 224;
+  //   // const SCREEN_HEIGHT = 256;
+  //   const SCALE_FACTOR = 2;
 
-    if (!ctx) return;
+  //   if (!ctx) return;
 
-    // Get the ImageData directly from Rust/WebAssembly
-    const imageData = machine.get_frame_image_data(SCALE_FACTOR);
+  //   // Get the ImageData directly from Rust/WebAssembly
+  //   const imageData = machine.get_frame_image_data(SCALE_FACTOR);
 
-    // Put the imageData onto the canvas context in a single operation
-    ctx.putImageData(imageData, 0, 0);
-  }
+  //   // Put the imageData onto the canvas context in a single operation
+  //   ctx.putImageData(imageData, 0, 0);
+  // }
 
   useEffect(() => {
     init();
-    const canvas = canvasRef.current;
-    const ctx = canvas?.getContext("2d");
+    // const canvas = canvasRef.current;
+    // const ctx = canvas?.getContext("2d");
 
     async function loadWasmAndStart() {
       const machine = new SpaceInvadersMachine();
@@ -47,7 +47,9 @@ const Emulator = () => {
       // while (true) {
       function renderFrame() {
         machine.start_emulation();
-        frame(ctx, machine);
+        // console.log("hello");
+        // draw_screen(machine.get_memory());
+        // frame(ctx, machine);
         requestAnimationFrame(renderFrame);
       }
       requestAnimationFrame(renderFrame);

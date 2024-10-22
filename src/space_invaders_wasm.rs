@@ -9,9 +9,9 @@ use wasm_bindgen::prelude::*;
 use web_sys::{window, CanvasRenderingContext2d, Document, HtmlCanvasElement, ImageData};
 use web_sys::console;
 
-const SCALE_FACTOR: u32 = 2;
-const SCREEN_WIDTH: u32 = 224 * SCALE_FACTOR;
-const SCREEN_HEIGHT: u32 = 256 * SCALE_FACTOR;
+const SCALE_FACTOR: usize = 2;
+const SCREEN_WIDTH: usize = 224;
+const SCREEN_HEIGHT: usize = 256;
 const VIDEO_MEM_START: usize = 0x2400;
 const VIDEO_MEM_END: usize = 0x4000;
 static mut CONTEXT: Option<CanvasRenderingContext2d> = None;
