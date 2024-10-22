@@ -25,6 +25,9 @@ const hexLoader: Plugin = {
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  build:{
+    target: 'esnext',
+  },
   plugins: [react(), wasm(), hexLoader],
 })
 
