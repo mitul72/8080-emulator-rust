@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from "react";
-import initWasm, {
+import { useEffect, useRef } from "react";
+import {
   SpaceInvadersMachine,
   draw_screen,
   init,

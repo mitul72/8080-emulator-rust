@@ -1,8 +1,8 @@
-// declare module '*?raw-hex' {
+declare module '*?raw-hex' {
 
-//     const content: Array;
+    const content: Array;
   
-//     export default content;
+    export default content;
   
-//   }
+  }
   
