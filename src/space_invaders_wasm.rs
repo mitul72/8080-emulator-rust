@@ -7,6 +7,7 @@ use std::time::Duration;
 use std::time::Instant;
 use wasm_bindgen::prelude::*;
 use web_sys::{window, CanvasRenderingContext2d, Document, HtmlCanvasElement, ImageData};
+use web_sys::console;
 
 const SCALE_FACTOR: u32 = 2;
 const SCREEN_WIDTH: u32 = 224 * SCALE_FACTOR;
@@ -176,52 +177,16 @@ impl SpaceInvadersMachine {
     }
 
     pub fn draw_screen(&mut self) {
-        let framebuffer = &self.cpu.state.memory[0x2400..0x4000]; // Video memory
-
-        // Access the image data buffer
-        let mut data = self.image_data.data();
-
-        let width = SCREEN_WIDTH as usize;
-        let height = SCREEN_HEIGHT as usize;
-
-        // Loop through the framebuffer and set pixels
-        for (i, &byte) in framebuffer.iter().enumerate() {
-            let base_pixel_index = i * 8;
-
-            for bit in 0..8 {
-                let pixel_on = (byte >> bit) & 1;
-                let pixel_index = base_pixel_index + bit;
-
-                // Calculate x and y position for each pixel
-                let x = (pixel_index % 224) as usize;
-                let y = (pixel_index / 224) as usize;
-
-                // Rotate screen (Space Invaders uses a rotated display)
-                let screen_x = SCREEN_HEIGHT as usize - y - 1;
-                let screen_y = x;
-
-                // Scale x and y
-                let scaled_x = screen_x * SCALE_FACTOR as usize;
-                let scaled_y = screen_y * SCALE_FACTOR as usize;
-
-                let color = if pixel_on != 0 { 255 } else { 0 };
-
-                for dy in 0..SCALE_FACTOR as usize {
-                    for dx in 0..SCALE_FACTOR as usize {
-                        let idx = ((scaled_y + dy) * width + (scaled_x + dx)) * 4;
-                        data[idx] = color; // Red
-                        data[idx + 1] = color; // Green
-                        data[idx + 2] = color; // Blue
-                        data[idx + 3] = 255; // Alpha
-                    }
+        match self.get_frame_image_data(SCALE_FACTOR as u32) {
+            Ok(image_data) => {
+                if let Err(e) = self.context.put_image_data(&image_data, 0.0, 0.0) {
+                    console::error_1(&format!("Failed to put image data: {:?}", e).into());
                 }
+            },
+            Err(e) => {
+                console::error_1(&format!("Failed to get frame image data: {:?}", e).into());
             }
         }
-
-        // Put the image data onto the canvas
-        self.context
-            .put_image_data(&self.image_data, 0.0, 0.0)
-            .expect("Failed to put image data");
     }
 
     pub fn do_cpu(&mut self) {
@@ -241,5 +206,58 @@ impl SpaceInvadersMachine {
                 self.which_interrupt = 1;
             }
         }
+    }
+
+    pub fn get_frame_image_data(&self, scale_factor: u32) -> Result<ImageData, JsValue> {
+        const SCREEN_WIDTH: usize = 224;
+        const SCREEN_HEIGHT: usize = 256;
+        const VIDEO_MEM_START: usize = 0x2400;
+        const VIDEO_MEM_END: usize = 0x4000;
+
+        let scaled_width = SCREEN_HEIGHT * scale_factor as usize;
+        let scaled_height = SCREEN_WIDTH * scale_factor as usize;
+
+        let mut pixels = vec![0u8; scaled_width * scaled_height * 4];
+
+        let framebuffer = &self.cpu.state.memory[VIDEO_MEM_START..VIDEO_MEM_END];
+
+        // Debug output
+        // console::log_1(&format!("Framebuffer size: {}", framebuffer.len()).into());
+        // console::log_1(&format!("First few bytes: {:?}", &framebuffer[..16]).into());
+
+        // Draw the actual framebuffer content
+        for (i, &byte) in framebuffer.iter().enumerate() {
+            let y = i / 32;  // 32 bytes per row (256 pixels / 8 bits per byte)
+            let x_byte = i % 32;
+
+            for bit in 0..8 {
+                let x = x_byte * 8 + bit;
+                let pixel_on = (byte >> bit) & 1;  // Don't reverse bit order
+
+                // Rotate 90 degrees clockwise
+                let screen_x = y;
+                let screen_y = SCREEN_WIDTH - 1 - x;  // Flip vertically
+
+                if pixel_on != 0 {
+                    for dy in 0..scale_factor as usize {
+                        for dx in 0..scale_factor as usize {
+                            let idx = ((screen_y * scale_factor as usize + dy) * scaled_width + (screen_x * scale_factor as usize + dx)) * 4;
+                            if idx + 3 < pixels.len() {
+                                pixels[idx] = 255;     // Red
+                                pixels[idx + 1] = 255; // Green
+                                pixels[idx + 2] = 255; // Blue
+                                pixels[idx + 3] = 255; // Alpha
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        ImageData::new_with_u8_clamped_array_and_sh(
+            wasm_bindgen::Clamped(&pixels),
+            scaled_width as u32,
+            scaled_height as u32,
+        )
     }
 }

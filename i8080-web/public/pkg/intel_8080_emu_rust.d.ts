@@ -33,5 +33,11 @@ export class SpaceInvadersMachine {
    */
   get_framebuffer_len(): number;
   start_emulation(): void;
+  draw_screen(): void;
   do_cpu(): void;
+  /**
+   * @param {number} scale_factor
+   * @returns {ImageData}
+   */
+  get_frame_image_data(scale_factor: number): ImageData;
 }
