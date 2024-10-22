@@ -3,8 +3,8 @@ import {
   SpaceInvadersMachine,
   // draw_screen,
   init,
-} from "../public/pkg_2/intel_8080_emu_rust"; // Import the WASM module from the generated pkg folder
-import { memory } from "../public/pkg_2/intel_8080_emu_rust_bg.wasm";
+} from "../public/pkg/intel_8080_emu_rust"; // Import the WASM module from the generated pkg folder
+import { memory } from "../public/pkg/intel_8080_emu_rust_bg.wasm";
 
 import Rom from "../public/roms/space_invaders/invaders?raw-hex";
 
