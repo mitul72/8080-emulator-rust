@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import {
   SpaceInvadersMachine,
   init,
@@ -6,66 +6,68 @@ import {
 
 import Rom from "../public/roms/space_invaders/invaders?raw-hex";
 
+const SCALE_FACTOR = 2;
+
 const Emulator = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  // function frame(
-  //   ctx: CanvasRenderingContext2D | null | undefined,
-  //   machine: SpaceInvadersMachine
-  // ) {
-  //   // const SCREEN_WIDTH = 224;
-  //   // const SCREEN_HEIGHT = 256;
-  //   const SCALE_FACTOR = 2;
+  const machineRef = useRef<SpaceInvadersMachine | null>(null);
+  const [fps, setFps] = useState(0);
+  const lastFrameTimeRef = useRef(performance.now());
+  const frameCountRef = useRef(0);
 
-  //   if (!ctx) return;
+  const renderFrame = useCallback(() => {
+    const ctx = canvasRef.current?.getContext("2d");
+    const machine = machineRef.current;
 
-  //   // Get the ImageData directly from Rust/WebAssembly
-  //   const imageData = machine.get_frame_image_data(SCALE_FACTOR);
+    if (ctx && machine) {
+      machine.do_cpu();
+      const imageData = machine.get_frame_image_data(SCALE_FACTOR);
+      ctx.putImageData(imageData, 0, 0);
+    }
 
-  //   // Put the imageData onto the canvas context in a single operation
-  //   ctx.putImageData(imageData, 0, 0);
-  // }
+    // FPS calculation
+    const now = performance.now();
+    frameCountRef.current++;
+    if (now - lastFrameTimeRef.current >= 1000) {
+      setFps(Math.round(frameCountRef.current * 1000 / (now - lastFrameTimeRef.current)));
+      frameCountRef.current = 0;
+      lastFrameTimeRef.current = now;
+    }
+
+    requestAnimationFrame(renderFrame);
+  }, []);
 
   useEffect(() => {
     init();
-    // const canvas = canvasRef.current;
-    // const ctx = canvas?.getContext("2d");
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
     async function loadWasmAndStart() {
       const machine = new SpaceInvadersMachine();
-
-      // Load ROMs and pass them to WebAssembly
-
-      let offset = 0;
+      machineRef.current = machine;
 
       const romData = new Uint8Array(Rom);
+      machine.load_rom(romData, 0);
 
-      machine.load_rom(romData, offset);
-      offset += romData.length;
-
-      // Start the emulation
-
-      // while (true) {
-      function renderFrame() {
-        machine.start_emulation();
-        // console.log("hello");
-        // draw_screen(machine.get_memory());
-        // frame(ctx, machine);
-        requestAnimationFrame(renderFrame);
-      }
       requestAnimationFrame(renderFrame);
     }
+
     loadWasmAndStart();
-  }, []);
+
+    return () => {
+      machineRef.current = null;
+    };
+  }, [renderFrame]);
 
   return (
-    <div>
+    <div className="emulator-container">
       <canvas
         id="gameCanvas"
         ref={canvasRef}
         width="448"
         height="512"
-        style={{ border: "1px solid black" }}
       />
+      <div className="fps-counter">FPS: {fps}</div>
     </div>
   );
 };
