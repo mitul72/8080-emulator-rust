@@ -20,6 +20,7 @@ web-sys = { version = "*", features = [
     "Document",
     "CanvasRenderingContext2d",
     "HtmlCanvasElement",
+    "ImageData",
 ] }
 js-sys = "0.3.72"
 console_error_panic_hook = "0.1.7"

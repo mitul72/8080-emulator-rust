@@ -6,7 +6,7 @@ use crate::emulator::cpu::CPU;
 use std::time::Duration;
 use std::time::Instant;
 use wasm_bindgen::prelude::*;
-use web_sys::{window, CanvasRenderingContext2d, Document, HtmlCanvasElement};
+use web_sys::{window, CanvasRenderingContext2d, Document, HtmlCanvasElement, ImageData};
 
 const SCALE_FACTOR: u32 = 2;
 const SCREEN_WIDTH: u32 = 224 * SCALE_FACTOR;
@@ -107,16 +107,44 @@ pub fn draw_screen(ptr: *const u8) {
 pub struct SpaceInvadersMachine {
     cpu: CPU,
     which_interrupt: u8,
+    context: CanvasRenderingContext2d,
+    image_data: ImageData,
 }
 
 #[wasm_bindgen]
 impl SpaceInvadersMachine {
     #[wasm_bindgen(constructor)]
-    pub fn new() -> SpaceInvadersMachine {
-        SpaceInvadersMachine {
-            cpu: CPU::new(),
-            which_interrupt: 1,
-        }
+    pub fn new() -> Result<SpaceInvadersMachine, JsValue> {
+        // Initialize CPU and interrupts
+        let cpu = CPU::new();
+        let which_interrupt = 1;
+
+        // Access the canvas and context
+        let window = web_sys::window().ok_or("No global `window` exists")?;
+        let document = window
+            .document()
+            .ok_or("Should have a document on window")?;
+        let canvas = document
+            .get_element_by_id("gameCanvas")
+            .ok_or("Document should have a canvas element with id 'gameCanvas'")?
+            .dyn_into::<HtmlCanvasElement>()?;
+        let context = canvas
+            .get_context("2d")?
+            .ok_or("Canvas should have a 2d context")?
+            .dyn_into::<CanvasRenderingContext2d>()?;
+
+        // Create an ImageData object
+        let image_data = context.create_image_data_with_sw_and_sh(
+            (SCREEN_WIDTH as f64).into(),
+            (SCREEN_HEIGHT as f64).into(),
+        )?;
+
+        Ok(SpaceInvadersMachine {
+            cpu,
+            which_interrupt,
+            context,
+            image_data,
+        })
     }
 
     #[wasm_bindgen]
@@ -144,6 +172,56 @@ impl SpaceInvadersMachine {
     #[wasm_bindgen]
     pub fn start_emulation(&mut self) {
         self.do_cpu();
+        self.draw_screen();
+    }
+
+    pub fn draw_screen(&mut self) {
+        let framebuffer = &self.cpu.state.memory[0x2400..0x4000]; // Video memory
+
+        // Access the image data buffer
+        let mut data = self.image_data.data();
+
+        let width = SCREEN_WIDTH as usize;
+        let height = SCREEN_HEIGHT as usize;
+
+        // Loop through the framebuffer and set pixels
+        for (i, &byte) in framebuffer.iter().enumerate() {
+            let base_pixel_index = i * 8;
+
+            for bit in 0..8 {
+                let pixel_on = (byte >> bit) & 1;
+                let pixel_index = base_pixel_index + bit;
+
+                // Calculate x and y position for each pixel
+                let x = (pixel_index % 224) as usize;
+                let y = (pixel_index / 224) as usize;
+
+                // Rotate screen (Space Invaders uses a rotated display)
+                let screen_x = SCREEN_HEIGHT as usize - y - 1;
+                let screen_y = x;
+
+                // Scale x and y
+                let scaled_x = screen_x * SCALE_FACTOR as usize;
+                let scaled_y = screen_y * SCALE_FACTOR as usize;
+
+                let color = if pixel_on != 0 { 255 } else { 0 };
+
+                for dy in 0..SCALE_FACTOR as usize {
+                    for dx in 0..SCALE_FACTOR as usize {
+                        let idx = ((scaled_y + dy) * width + (scaled_x + dx)) * 4;
+                        data[idx] = color; // Red
+                        data[idx + 1] = color; // Green
+                        data[idx + 2] = color; // Blue
+                        data[idx + 3] = 255; // Alpha
+                    }
+                }
+            }
+        }
+
+        // Put the image data onto the canvas
+        self.context
+            .put_image_data(&self.image_data, 0.0, 0.0)
+            .expect("Failed to put image data");
     }
 
     pub fn do_cpu(&mut self) {
