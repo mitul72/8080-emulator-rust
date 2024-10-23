@@ -5,7 +5,8 @@ import Rom from "../public/roms/space_invaders/invaders?raw-hex";
 
 import "./Emulator.css";
 
-const SCALE_FACTOR = 2;
+const ORIGINAL_WIDTH = 224;
+const ORIGINAL_HEIGHT = 256;
 
 class FpsCtrl {
   private delay: number;
@@ -68,6 +69,25 @@ const Emulator = () => {
   const fpsCtrlRef = useRef<FpsCtrl | null>(null);
   const frameCountRef = useRef(0);
   const lastFpsUpdateRef = useRef(performance.now());
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [scaleFactor, setScaleFactor] = useState(1);
+
+  const updateScaleFactor = useCallback(() => {
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+    
+    const widthScale = windowWidth / ORIGINAL_WIDTH;
+    const heightScale = windowHeight / ORIGINAL_HEIGHT;
+    
+    const newScaleFactor = Math.floor(Math.min(widthScale, heightScale));
+    setScaleFactor(Math.max(1, newScaleFactor)); // Ensure scale factor is at least 1
+  }, []);
+
+  useEffect(() => {
+    updateScaleFactor();
+    window.addEventListener('resize', updateScaleFactor);
+    return () => window.removeEventListener('resize', updateScaleFactor);
+  }, [updateScaleFactor]);
 
   const renderFrame = useCallback(() => {
     const offscreenCanvas = offscreenCanvasRef.current;
@@ -80,7 +100,7 @@ const Emulator = () => {
         for (let i = 0; i < 3; i++) {
           machine.do_cpu();
         }
-        const imageData = machine.get_frame_image_data(SCALE_FACTOR);
+        const imageData = machine.get_frame_image_data(scaleFactor);
         ctx.putImageData(imageData, 0, 0);
       }
     }
@@ -97,7 +117,7 @@ const Emulator = () => {
       frameCountRef.current = 0;
       lastFpsUpdateRef.current = now;
     }
-  }, []);
+  }, [scaleFactor]);
 
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
     if (machineRef.current) {
@@ -220,7 +240,16 @@ const Emulator = () => {
 
   return (
     <div className="emulator-container">
-      <canvas id="gameCanvas" ref={canvasRef} width="448" height="512" />
+      <canvas 
+        id="gameCanvas" 
+        ref={canvasRef} 
+        width={ORIGINAL_WIDTH * scaleFactor} 
+        height={ORIGINAL_HEIGHT * scaleFactor}
+        style={{
+          width: `${ORIGINAL_WIDTH * scaleFactor}px`,
+          height: `${ORIGINAL_HEIGHT * scaleFactor}px`,
+        }}
+      />
       <div className="fps-counter">FPS: {fps}</div>
       <div className="mobile-controls">
         <button 
