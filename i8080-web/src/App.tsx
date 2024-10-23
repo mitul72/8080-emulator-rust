@@ -69,7 +69,7 @@ const Emulator = () => {
   const fpsCtrlRef = useRef<FpsCtrl | null>(null);
   const frameCountRef = useRef(0);
   const lastFpsUpdateRef = useRef(performance.now());
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  // const [isFullscreen, setIsFullscreen] = useState(false);
   const [scaleFactor, setScaleFactor] = useState(1);
 
   const updateScaleFactor = useCallback(() => {
