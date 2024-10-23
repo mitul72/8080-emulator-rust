@@ -14,6 +14,8 @@ export function spaceinvadersmachine_start_emulation(a: number): void;
 export function spaceinvadersmachine_draw_screen(a: number): void;
 export function spaceinvadersmachine_do_cpu(a: number): void;
 export function spaceinvadersmachine_get_frame_image_data(a: number, b: number): Array;
+export function spaceinvadersmachine_handle_key_down(a: number, b: number): void;
+export function spaceinvadersmachine_handle_key_up(a: number, b: number): void;
 export function main(): void;
 export function __wbindgen_malloc(a: number, b: number): number;
 export function __wbindgen_realloc(a: number, b: number, c: number, d: number): number;

@@ -305,6 +305,18 @@ export class SpaceInvadersMachine {
         }
         return takeFromExternrefTable0(ret[0]);
     }
+    /**
+     * @param {number} key
+     */
+    handle_key_down(key) {
+        wasm.spaceinvadersmachine_handle_key_down(this.__wbg_ptr, key);
+    }
+    /**
+     * @param {number} key
+     */
+    handle_key_up(key) {
+        wasm.spaceinvadersmachine_handle_key_up(this.__wbg_ptr, key);
+    }
 }
 
 export function __wbindgen_string_new(arg0, arg1) {

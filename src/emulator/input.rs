@@ -44,4 +44,14 @@ impl CPU {
             _ => {}
         }
     }
+
+    #[cfg(target_arch = "wasm32")]
+    pub fn handle_key_down(&mut self, key: u8) {
+        self.state.in_port1 |= key;
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    pub fn handle_key_up(&mut self, key: u8) {
+        self.state.in_port1 &= !key;
+    }
 }

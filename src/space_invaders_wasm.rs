@@ -1,4 +1,5 @@
 #![cfg(feature = "wasm")]
+
 use crate::emulator::cpu;
 use crate::emulator::cpu::CPU;
 // use crate::emulator::machine;
@@ -6,8 +7,8 @@ use crate::emulator::cpu::CPU;
 use std::time::Duration;
 use std::time::Instant;
 use wasm_bindgen::prelude::*;
-use web_sys::{window, CanvasRenderingContext2d, Document, HtmlCanvasElement, ImageData};
 use web_sys::console;
+use web_sys::{window, CanvasRenderingContext2d, Document, HtmlCanvasElement, ImageData};
 
 const SCALE_FACTOR: usize = 2;
 const SCREEN_WIDTH: usize = 224;
@@ -172,7 +173,9 @@ impl SpaceInvadersMachine {
 
     #[wasm_bindgen]
     pub fn start_emulation(&mut self) {
-        self.do_cpu();
+        for _ in 0..4 {
+            self.do_cpu();
+        }
         self.draw_screen();
     }
 
@@ -182,7 +185,7 @@ impl SpaceInvadersMachine {
                 if let Err(e) = self.context.put_image_data(&image_data, 0.0, 0.0) {
                     console::error_1(&format!("Failed to put image data: {:?}", e).into());
                 }
-            },
+            }
             Err(e) => {
                 console::error_1(&format!("Failed to get frame image data: {:?}", e).into());
             }
@@ -227,23 +230,25 @@ impl SpaceInvadersMachine {
 
         // Draw the actual framebuffer content
         for (i, &byte) in framebuffer.iter().enumerate() {
-            let y = i / 32;  // 32 bytes per row (256 pixels / 8 bits per byte)
+            let y = i / 32; // 32 bytes per row (256 pixels / 8 bits per byte)
             let x_byte = i % 32;
 
             for bit in 0..8 {
                 let x = x_byte * 8 + bit;
-                let pixel_on = (byte >> bit) & 1;  // Don't reverse bit order
+                let pixel_on = (byte >> bit) & 1; // Don't reverse bit order
 
                 // Rotate 90 degrees clockwise
                 let screen_x = y;
-                let screen_y = SCREEN_WIDTH - 1 - x;  // Flip vertically
+                let screen_y = SCREEN_WIDTH - 1 - x; // Flip vertically
 
                 if pixel_on != 0 {
                     for dy in 0..scale_factor as usize {
                         for dx in 0..scale_factor as usize {
-                            let idx = ((screen_y * scale_factor as usize + dy) * scaled_width + (screen_x * scale_factor as usize + dx)) * 4;
+                            let idx = ((screen_y * scale_factor as usize + dy) * scaled_width
+                                + (screen_x * scale_factor as usize + dx))
+                                * 4;
                             if idx + 3 < pixels.len() {
-                                pixels[idx] = 255;     // Red
+                                pixels[idx] = 255; // Red
                                 pixels[idx + 1] = 255; // Green
                                 pixels[idx + 2] = 255; // Blue
                                 pixels[idx + 3] = 255; // Alpha
@@ -259,5 +264,15 @@ impl SpaceInvadersMachine {
             scaled_width as u32,
             scaled_height as u32,
         )
+    }
+
+    #[wasm_bindgen]
+    pub fn handle_key_down(&mut self, key: u8) {
+        self.cpu.handle_key_down(key);
+    }
+
+    #[wasm_bindgen]
+    pub fn handle_key_up(&mut self, key: u8) {
+        self.cpu.handle_key_up(key);
     }
 }

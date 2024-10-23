@@ -40,4 +40,12 @@ export class SpaceInvadersMachine {
    * @returns {ImageData}
    */
   get_frame_image_data(scale_factor: number): ImageData;
+  /**
+   * @param {number} key
+   */
+  handle_key_down(key: number): void;
+  /**
+   * @param {number} key
+   */
+  handle_key_up(key: number): void;
 }
