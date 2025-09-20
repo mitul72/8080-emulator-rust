@@ -244,8 +244,8 @@ impl SpaceInvadersMachine {
         const VIDEO_MEM_START: usize = 0x2400;
         const VIDEO_MEM_END: usize = 0x4000;
 
-        let scaled_width = SCREEN_HEIGHT * scale_factor as usize;
-        let scaled_height = SCREEN_WIDTH * scale_factor as usize;
+        let scaled_width = SCREEN_WIDTH * scale_factor as usize;
+        let scaled_height = SCREEN_HEIGHT * scale_factor as usize;
 
         let mut pixels = vec![0u8; scaled_width * scaled_height * 4];
 
@@ -255,30 +255,46 @@ impl SpaceInvadersMachine {
         // console::log_1(&format!("Framebuffer size: {}", framebuffer.len()).into());
         // console::log_1(&format!("First few bytes: {:?}", &framebuffer[..16]).into());
 
-        // Draw the actual framebuffer content
-        for (i, &byte) in framebuffer.iter().enumerate() {
-            let y = i / 32; // 32 bytes per row (256 pixels / 8 bits per byte)
-            let x_byte = i % 32;
+        // Check for score area activity (top rows of original screen)
+        let mut score_area_pixels = 0;
+        for i in 0..32*8 { // First 8 rows where score typically appears
+            if framebuffer[i] != 0 {
+                score_area_pixels += framebuffer[i].count_ones();
+            }
+        }
 
+        // Draw the actual framebuffer content using the working coordinate system
+        for addr in VIDEO_MEM_START..VIDEO_MEM_END {
+            let byte = self.cpu.state.memory[addr];
+
+            // Each byte represents 8 vertical pixels
             for bit in 0..8 {
-                let x = x_byte * 8 + bit;
-                let pixel_on = (byte >> bit) & 1; // Don't reverse bit order
-
-                // Rotate 90 degrees clockwise
-                let screen_x = y;
-                let screen_y = SCREEN_WIDTH - 1 - x; // Flip vertically
+                let pixel_on = (byte >> bit) & 1;
 
                 if pixel_on != 0 {
+                    // Calculate the x and y coordinates (same as working Rust version)
+                    let pixel_index = (addr - VIDEO_MEM_START) * 8 + bit;
+                    let x = (pixel_index % 256) as usize;
+                    let y = (pixel_index / 256) as usize;
+
+                    // Scale and rotate coordinates to match working implementation exactly
+                    let scaled_x = (256 - 1 - x) * scale_factor as usize;
+                    let scaled_y = y * scale_factor as usize;
+
+                    // Draw the scaled pixel (coordinates swapped for rotation like SDL version)
                     for dy in 0..scale_factor as usize {
                         for dx in 0..scale_factor as usize {
-                            let idx = ((screen_y * scale_factor as usize + dy) * scaled_width
-                                + (screen_x * scale_factor as usize + dx))
-                                * 4;
-                            if idx + 3 < pixels.len() {
-                                pixels[idx] = 255; // Red
-                                pixels[idx + 1] = 255; // Green
-                                pixels[idx + 2] = 255; // Blue
-                                pixels[idx + 3] = 255; // Alpha
+                            let final_x = scaled_y + dy;  // SDL: scaled_y as x
+                            let final_y = scaled_x + dx;  // SDL: scaled_x as y
+
+                            if final_x < scaled_width && final_y < scaled_height {
+                                let idx = (final_y * scaled_width + final_x) * 4;
+                                if idx + 3 < pixels.len() {
+                                    pixels[idx] = 255; // Red
+                                    pixels[idx + 1] = 255; // Green
+                                    pixels[idx + 2] = 255; // Blue
+                                    pixels[idx + 3] = 255; // Alpha
+                                }
                             }
                         }
                     }
@@ -288,8 +304,8 @@ impl SpaceInvadersMachine {
 
         ImageData::new_with_u8_clamped_array_and_sh(
             wasm_bindgen::Clamped(&pixels),
-            scaled_width as u32,
-            scaled_height as u32,
+            scaled_width as u32,   // 448 (224 * 2)
+            scaled_height as u32,  // 512 (256 * 2)
         )
     }
 

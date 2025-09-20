@@ -74,7 +74,7 @@ export function FuturisticNeonEmulatorComponent({
           <Card className="bg-gray-800 border-2 border-purple-400 shadow-lg rounded-xl shadow-purple-400/50">
             <CardHeader>
               <CardTitle className="text-xl text-purple-400 sm:text-2xl">
-                Quantum Instruction Log
+                Instruction Log
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -114,14 +114,14 @@ export function FuturisticNeonEmulatorComponent({
           <Card className="bg-gray-800 border-2 shadow-lg border-cyan-400 rounded-xl shadow-cyan-400/50">
             <CardHeader>
               <CardTitle className="text-xl text-cyan-400 sm:text-2xl">
-                Neural Network Status
+                CPU Status
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <h3 className="mb-2 text-lg font-semibold text-purple-400">
-                    Synaptic Registers
+                    Registers
                   </h3>
                   <div className="grid grid-cols-2 gap-2 text-cyan-400">
                     <div>
@@ -170,7 +170,7 @@ export function FuturisticNeonEmulatorComponent({
                 </div>
                 <div>
                   <h3 className="mb-2 text-lg font-semibold text-purple-400">
-                    Quantum Flags
+                    Flags
                   </h3>
                   <div className="grid grid-cols-1 gap-2 text-cyan-400">
                     <div>Zero: {cpuState?.get("flags") & 0x40 ? "1" : "0"}</div>

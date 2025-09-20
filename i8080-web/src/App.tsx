@@ -271,7 +271,7 @@ const Emulator = () => {
         cpuState={cpuState}
         instructions={instructions}
       />
-      <div className="fps-counter">FPS: {fps}</div>
+      {/* <div className="fps-counter">FPS: {fps}</div> */}
       <div className="mobile-controls">
         <button
           onTouchStart={(e) => handleTouchStart(0x20, e)}
