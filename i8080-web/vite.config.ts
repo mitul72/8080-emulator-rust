@@ -3,6 +3,8 @@ import react from '@vitejs/plugin-react'
 import wasm from 'vite-plugin-wasm';
 import fs from 'fs';
 import type { Plugin } from 'vite';
+import path from 'path';
+import tailwindcss from 'tailwindcss';
 
 const hexLoader: Plugin = {
   name: 'hex-loader',
@@ -29,5 +31,16 @@ export default defineConfig({
     target: 'esnext',
   },
   plugins: [react(), wasm(), hexLoader],
+  css: {
+    postcss: {
+      plugins: [tailwindcss()],
+    },
+  },
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
+  },
+
 })
 

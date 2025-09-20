@@ -4,6 +4,7 @@ import { SpaceInvadersMachine, init } from "../public/wasm/intel_8080_emu_rust";
 import Rom from "../public/roms/space_invaders/invaders?raw-hex";
 
 import "./Emulator.css";
+import { FuturisticNeonEmulatorComponent } from "./components/futuristic-neon-emulator";
 
 const ORIGINAL_WIDTH = 224;
 const ORIGINAL_HEIGHT = 256;
@@ -69,24 +70,27 @@ const Emulator = () => {
   const fpsCtrlRef = useRef<FpsCtrl | null>(null);
   const frameCountRef = useRef(0);
   const lastFpsUpdateRef = useRef(performance.now());
+  const cpuStateUpdateCountRef = useRef(0);
   // const [isFullscreen, setIsFullscreen] = useState(false);
   const [scaleFactor, setScaleFactor] = useState(1);
+  const [cpuState, setCpuState] = useState<any>(null);
+  const [instructions, setInstructions] = useState<any>(null);
 
   const updateScaleFactor = useCallback(() => {
     const windowWidth = window.innerWidth;
     const windowHeight = window.innerHeight;
-    
+
     const widthScale = windowWidth / ORIGINAL_WIDTH;
     const heightScale = windowHeight / ORIGINAL_HEIGHT;
-    
+
     const newScaleFactor = Math.floor(Math.min(widthScale, heightScale));
     setScaleFactor(Math.max(1, newScaleFactor)); // Ensure scale factor is at least 1
   }, []);
 
   useEffect(() => {
     updateScaleFactor();
-    window.addEventListener('resize', updateScaleFactor);
-    return () => window.removeEventListener('resize', updateScaleFactor);
+    window.addEventListener("resize", updateScaleFactor);
+    return () => window.removeEventListener("resize", updateScaleFactor);
   }, [updateScaleFactor]);
 
   const renderFrame = useCallback(() => {
@@ -102,6 +106,12 @@ const Emulator = () => {
         }
         const imageData = machine.get_frame_image_data(scaleFactor);
         ctx.putImageData(imageData, 0, 0);
+        // Update CPU state less frequently (every 10 frames)
+        cpuStateUpdateCountRef.current++;
+        if (cpuStateUpdateCountRef.current % 10 === 0) {
+          setCpuState(machine.get_cpu_state());
+          setInstructions(machine.get_last_instructions());
+        }
       }
     }
 
@@ -122,27 +132,27 @@ const Emulator = () => {
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
     if (machineRef.current) {
       switch (event.key) {
-        case 'ArrowLeft':
+        case "ArrowLeft":
           machineRef.current.handle_key_down(0x20); // Left
           event.preventDefault();
           break;
-        case 'ArrowRight':
+        case "ArrowRight":
           machineRef.current.handle_key_down(0x40); // Right
           event.preventDefault();
           break;
-        case ' ':
+        case " ":
           machineRef.current.handle_key_down(0x10); // Fire
           event.preventDefault();
           break;
-        case '1':
+        case "1":
           machineRef.current.handle_key_down(0x04); // 1P Start
           event.preventDefault();
           break;
-        case '2':
+        case "2":
           machineRef.current.handle_key_down(0x02); // 2P Start
           event.preventDefault();
           break;
-        case 'Tab':
+        case "Tab":
           machineRef.current.handle_key_down(0x01); // Coin
           event.preventDefault();
           break;
@@ -153,41 +163,47 @@ const Emulator = () => {
   const handleKeyUp = useCallback((event: KeyboardEvent) => {
     if (machineRef.current) {
       switch (event.key) {
-        case 'ArrowLeft':
+        case "ArrowLeft":
           machineRef.current.handle_key_up(0x20); // Left
           break;
-        case 'ArrowRight':
+        case "ArrowRight":
           machineRef.current.handle_key_up(0x40); // Right
           break;
-        case ' ':
+        case " ":
           machineRef.current.handle_key_up(0x10); // Fire
           break;
-        case '1':
+        case "1":
           machineRef.current.handle_key_up(0x04); // 1P Start
           break;
-        case '2':
+        case "2":
           machineRef.current.handle_key_up(0x02); // 2P Start
           break;
-        case 'Tab':
+        case "Tab":
           machineRef.current.handle_key_up(0x01); // Coin
           break;
       }
     }
   }, []);
 
-  const handleTouchStart = useCallback((action: number, event: React.TouchEvent) => {
-    event.preventDefault();
-    if (machineRef.current) {
-      machineRef.current.handle_key_down(action);
-    }
-  }, []);
+  const handleTouchStart = useCallback(
+    (action: number, event: React.TouchEvent) => {
+      event.preventDefault();
+      if (machineRef.current) {
+        machineRef.current.handle_key_down(action);
+      }
+    },
+    []
+  );
 
-  const handleTouchEnd = useCallback((action: number, event: React.TouchEvent) => {
-    event.preventDefault();
-    if (machineRef.current) {
-      machineRef.current.handle_key_up(action);
-    }
-  }, []);
+  const handleTouchEnd = useCallback(
+    (action: number, event: React.TouchEvent) => {
+      event.preventDefault();
+      if (machineRef.current) {
+        machineRef.current.handle_key_up(action);
+      }
+    },
+    []
+  );
 
   useEffect(() => {
     init();
@@ -209,8 +225,8 @@ const Emulator = () => {
       fpsCtrlRef.current.start();
 
       // Add event listeners for keyboard input
-      window.addEventListener('keydown', handleKeyDown);
-      window.addEventListener('keyup', handleKeyUp);
+      window.addEventListener("keydown", handleKeyDown);
+      window.addEventListener("keyup", handleKeyUp);
     }
 
     loadWasmAndStart();
@@ -233,57 +249,62 @@ const Emulator = () => {
       }
 
       // Remove event listeners
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
     };
   }, [renderFrame, handleKeyDown, handleKeyUp]);
 
   return (
     <div className="emulator-container">
-      <canvas 
-        id="gameCanvas" 
-        ref={canvasRef} 
-        width={ORIGINAL_WIDTH * scaleFactor} 
+      {/* <canvas
+        id="gameCanvas"
+        ref={canvasRef}
+        width={ORIGINAL_WIDTH * scaleFactor}
         height={ORIGINAL_HEIGHT * scaleFactor}
         style={{
           width: `${ORIGINAL_WIDTH * scaleFactor}px`,
           height: `${ORIGINAL_HEIGHT * scaleFactor}px`,
         }}
+      /> */}
+      <FuturisticNeonEmulatorComponent
+        canvasRef={canvasRef}
+        cpuState={cpuState}
+        instructions={instructions}
       />
       <div className="fps-counter">FPS: {fps}</div>
       <div className="mobile-controls">
-        <button 
-          onTouchStart={(e) => handleTouchStart(0x20, e)} 
+        <button
+          onTouchStart={(e) => handleTouchStart(0x20, e)}
           onTouchEnd={(e) => handleTouchEnd(0x20, e)}
         >
           Left
         </button>
-        <button 
-          onTouchStart={(e) => handleTouchStart(0x40, e)} 
+        <button
+          onTouchStart={(e) => handleTouchStart(0x40, e)}
           onTouchEnd={(e) => handleTouchEnd(0x40, e)}
         >
           Right
         </button>
-        <button 
-          onTouchStart={(e) => handleTouchStart(0x10, e)} 
+        <button
+          onTouchStart={(e) => handleTouchStart(0x10, e)}
           onTouchEnd={(e) => handleTouchEnd(0x10, e)}
         >
           Fire
         </button>
-        <button 
-          onTouchStart={(e) => handleTouchStart(0x04, e)} 
+        <button
+          onTouchStart={(e) => handleTouchStart(0x04, e)}
           onTouchEnd={(e) => handleTouchEnd(0x04, e)}
         >
           1P Start
         </button>
-        <button 
-          onTouchStart={(e) => handleTouchStart(0x02, e)} 
+        <button
+          onTouchStart={(e) => handleTouchStart(0x02, e)}
           onTouchEnd={(e) => handleTouchEnd(0x02, e)}
         >
           2P Start
         </button>
-        <button 
-          onTouchStart={(e) => handleTouchStart(0x01, e)} 
+        <button
+          onTouchStart={(e) => handleTouchStart(0x01, e)}
           onTouchEnd={(e) => handleTouchEnd(0x01, e)}
         >
           Coin

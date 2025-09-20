@@ -160,6 +160,33 @@ impl SpaceInvadersMachine {
         self.cpu.state.memory.as_ptr()
     }
 
+    #[wasm_bindgen]
+    pub fn get_cpu_state(&self) -> JsValue {
+        serde_wasm_bindgen::to_value(&serde_json::json!({
+            "pc": self.cpu.state.pc,
+            "sp": self.cpu.state.sp,
+            "a": self.cpu.state.a,
+            "b": self.cpu.state.b,
+            "c": self.cpu.state.c,
+            "d": self.cpu.state.d,
+            "e": self.cpu.state.e,
+            "h": self.cpu.state.h,
+            "l": self.cpu.state.l,
+            "flags": self.cpu.state.get_flags_as_byte(),
+            "int_enable": self.cpu.state.int_enable
+        }))
+        .unwrap()
+    }
+
+    #[wasm_bindgen]
+    pub fn get_last_instructions(&self) -> JsValue {
+        let instructions = self.cpu.state.get_instructions_in_order();
+        serde_wasm_bindgen::to_value(&instructions).unwrap()
+    }
+
+    // #[wasm_bindgen]
+    // pub fn get_last_instructions(&self) -> js_sys::Array {}
+
     // Return the pointer to the framebuffer and its length
     #[wasm_bindgen]
     pub fn get_framebuffer_ptr(&self) -> *const u8 {

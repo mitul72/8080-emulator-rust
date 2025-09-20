@@ -1,7 +1,25 @@
 use core::fmt;
+use serde::Serialize;
 use std::fmt::{Debug, Formatter};
 
-#[derive(Default)]
+#[derive(Clone, Serialize)]
+pub struct InstructionInfo {
+    pub address: u16,
+    pub opcode: u8,
+    pub mnemonic: String,
+}
+
+impl Default for InstructionInfo {
+    fn default() -> Self {
+        InstructionInfo {
+            address: 0,
+            opcode: 0,
+            mnemonic: String::new(),
+        }
+    }
+}
+
+#[derive(Default, Serialize)]
 pub struct ConditionCodes {
     pub z: bool,
     pub s: bool,
@@ -31,6 +49,11 @@ pub struct State8080 {
     pub cc: ConditionCodes,
     pub int_enable: bool,
     pub cycles: i32,
+
+    // Instruction history circular buffer
+    pub instruction_history: Vec<Option<InstructionInfo>>,
+    pub instruction_index: usize,
+    pub instruction_count: usize,
 }
 
 impl State8080 {
@@ -61,6 +84,46 @@ impl State8080 {
         self.cc.cy = (flags & 0x01) != 0;
         self.cc.ac = (flags & 0x10) != 0;
     }
+
+    pub fn add_instruction(&mut self, address: u16, opcode: u8, mnemonic: String) {
+        let instruction = InstructionInfo {
+            address,
+            opcode,
+            mnemonic,
+        };
+
+        // Store at current index
+        self.instruction_history[self.instruction_index] = Some(instruction);
+
+        // Move to next position (wraps around at 50)
+        self.instruction_index = (self.instruction_index + 1) % 50;
+
+        // Track total count (caps at 50)
+        if self.instruction_count < 50 {
+            self.instruction_count += 1;
+        }
+    }
+
+    pub fn get_instructions_in_order(&self) -> Vec<InstructionInfo> {
+        let mut result = Vec::new();
+
+        // If buffer is full, start from current index (oldest)
+        let start_idx = if self.instruction_count == 50 {
+            self.instruction_index
+        } else {
+            0
+        };
+
+        // Collect instructions in chronological order
+        for i in 0..self.instruction_count {
+            let idx = (start_idx + i) % 50;
+            if let Some(ref instruction) = self.instruction_history[idx] {
+                result.push(instruction.clone());
+            }
+        }
+
+        result
+    }
 }
 
 impl Default for State8080 {
@@ -85,6 +148,11 @@ impl Default for State8080 {
             cc: ConditionCodes::default(),
             int_enable: false,
             cycles: 0,
+
+            // Initialize instruction history
+            instruction_history: vec![None; 50],
+            instruction_index: 0,
+            instruction_count: 0,
         }
     }
 }

@@ -1,4 +1,5 @@
 use super::data_types::{self, CYCLE_TABLE};
+use super::instruction_lookup::get_instruction_mnemonic;
 
 pub struct CPU {
     pub state: data_types::State8080,
@@ -39,6 +40,11 @@ pub fn unimplemented_instruction(instruction: u8) {
 pub fn emulate_8080_op(state: &mut data_types::State8080) -> u8 {
     let op_codes = &state.memory[state.pc as usize..];
     let op_code = op_codes[0];
+    let current_pc = state.pc;
+
+    // Create mnemonic before execution (when we can still access original memory state)
+    let mnemonic = get_instruction_mnemonic(op_code, state);
+
     // print!("PC: {:04X}  ", state.pc); // Print the address in hex
     // println!("{:02X} ", op_code); // Print the opcode in hex
 
@@ -228,6 +234,10 @@ pub fn emulate_8080_op(state: &mut data_types::State8080) -> u8 {
         0xFE => cpi(state),
         0xFF => rst(state, 7),
     }
+
+    // Record instruction after execution
+    state.add_instruction(current_pc, op_code, mnemonic);
+
     return CYCLE_TABLE[op_code as usize];
 }
 

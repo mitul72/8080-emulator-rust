@@ -8,6 +8,8 @@ export function __wbg_spaceinvadersmachine_free(a: number, b: number): void;
 export function spaceinvadersmachine_new(): Array;
 export function spaceinvadersmachine_load_rom(a: number, b: number, c: number, d: number): void;
 export function spaceinvadersmachine_get_memory(a: number): number;
+export function spaceinvadersmachine_get_cpu_state(a: number): number;
+export function spaceinvadersmachine_get_last_instructions(a: number): number;
 export function spaceinvadersmachine_get_framebuffer_ptr(a: number): number;
 export function spaceinvadersmachine_get_framebuffer_len(a: number): number;
 export function spaceinvadersmachine_start_emulation(a: number): void;

@@ -25,6 +25,14 @@ export class SpaceInvadersMachine {
    */
   get_memory(): number;
   /**
+   * @returns {any}
+   */
+  get_cpu_state(): any;
+  /**
+   * @returns {any}
+   */
+  get_last_instructions(): any;
+  /**
    * @returns {number}
    */
   get_framebuffer_ptr(): number;
