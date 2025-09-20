@@ -66,7 +66,7 @@ const Emulator = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const offscreenCanvasRef = useRef<OffscreenCanvas | null>(null);
   const machineRef = useRef<SpaceInvadersMachine | null>(null);
-  const [fps, setFps] = useState(0);
+  const [_fps, setFps] = useState(0);
   const fpsCtrlRef = useRef<FpsCtrl | null>(null);
   const frameCountRef = useRef(0);
   const lastFpsUpdateRef = useRef(performance.now());
