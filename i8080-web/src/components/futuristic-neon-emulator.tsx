@@ -40,7 +40,7 @@ export function FuturisticNeonEmulatorComponent({
   }, [wasmInstructions]);
 
   return (
-    <div className="container min-h-screen px-4 py-8 mx-auto font-sans bg-gray-900 text-cyan-300">
+    <div className="container min-w-full min-h-screen px-4 py-8 mx-auto font-sans bg-gray-900 text-cyan-300">
       <div className="flex flex-col items-center justify-between mb-8 sm:flex-row">
         <h1 className="mb-4 text-3xl font-bold text-center text-transparent sm:text-4xl md:text-5xl sm:mb-0 sm:text-left bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-600">
           Space Invaders Emulator

@@ -256,16 +256,6 @@ const Emulator = () => {
 
   return (
     <div className="emulator-container">
-      {/* <canvas
-        id="gameCanvas"
-        ref={canvasRef}
-        width={ORIGINAL_WIDTH * scaleFactor}
-        height={ORIGINAL_HEIGHT * scaleFactor}
-        style={{
-          width: `${ORIGINAL_WIDTH * scaleFactor}px`,
-          height: `${ORIGINAL_HEIGHT * scaleFactor}px`,
-        }}
-      /> */}
       <FuturisticNeonEmulatorComponent
         canvasRef={canvasRef}
         cpuState={cpuState}
