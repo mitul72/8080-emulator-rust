@@ -155,15 +155,6 @@ function getDataViewMemory0() {
     }
     return cachedDataViewMemory0;
 }
-
-export function main() {
-    wasm.main();
-}
-
-export function init() {
-    wasm.init();
-}
-
 /**
  * @param {number} a
  * @param {number} b
@@ -174,11 +165,19 @@ export function add(a, b) {
     return ret;
 }
 
+export function main() {
+    wasm.main();
+}
+
 /**
  * @param {number} ptr
  */
 export function draw_screen(ptr) {
     wasm.draw_screen(ptr);
+}
+
+export function init() {
+    wasm.init();
 }
 
 function takeFromExternrefTable0(idx) {
@@ -204,15 +203,6 @@ function addToExternrefTable0(obj) {
     return idx;
 }
 
-function handleError(f, args) {
-    try {
-        return f.apply(this, args);
-    } catch (e) {
-        const idx = addToExternrefTable0(e);
-        wasm.__wbindgen_exn_store(idx);
-    }
-}
-
 let cachedUint8ClampedArrayMemory0 = null;
 
 function getUint8ClampedArrayMemory0() {
@@ -225,6 +215,15 @@ function getUint8ClampedArrayMemory0() {
 function getClampedArrayU8FromWasm0(ptr, len) {
     ptr = ptr >>> 0;
     return getUint8ClampedArrayMemory0().subarray(ptr / 1, ptr / 1 + len);
+}
+
+function handleError(f, args) {
+    try {
+        return f.apply(this, args);
+    } catch (e) {
+        const idx = addToExternrefTable0(e);
+        wasm.__wbindgen_exn_store(idx);
+    }
 }
 
 function notDefined(what) { return () => { throw new Error(`${what} is not defined`); }; }
@@ -246,30 +245,15 @@ export class SpaceInvadersMachine {
         const ptr = this.__destroy_into_raw();
         wasm.__wbg_spaceinvadersmachine_free(ptr, 0);
     }
-    constructor() {
-        const ret = wasm.spaceinvadersmachine_new();
-        if (ret[2]) {
-            throw takeFromExternrefTable0(ret[1]);
-        }
-        this.__wbg_ptr = ret[0] >>> 0;
-        SpaceInvadersMachineFinalization.register(this, this.__wbg_ptr, this);
-        return this;
-    }
-    /**
-     * @param {Uint8Array} rom_data
-     * @param {number} offset
-     */
-    load_rom(rom_data, offset) {
-        const ptr0 = passArray8ToWasm0(rom_data, wasm.__wbindgen_malloc);
-        const len0 = WASM_VECTOR_LEN;
-        wasm.spaceinvadersmachine_load_rom(this.__wbg_ptr, ptr0, len0, offset);
-    }
     /**
      * @returns {number}
      */
     get_memory() {
         const ret = wasm.spaceinvadersmachine_get_memory(this.__wbg_ptr);
         return ret >>> 0;
+    }
+    draw_screen() {
+        wasm.spaceinvadersmachine_draw_screen(this.__wbg_ptr);
     }
     /**
      * @returns {any}
@@ -279,11 +263,26 @@ export class SpaceInvadersMachine {
         return ret;
     }
     /**
-     * @returns {any}
+     * @param {number} key
      */
-    get_last_instructions() {
-        const ret = wasm.spaceinvadersmachine_get_last_instructions(this.__wbg_ptr);
-        return ret;
+    handle_key_up(key) {
+        wasm.spaceinvadersmachine_handle_key_up(this.__wbg_ptr, key);
+    }
+    /**
+     * @param {number} key
+     */
+    handle_key_down(key) {
+        wasm.spaceinvadersmachine_handle_key_down(this.__wbg_ptr, key);
+    }
+    start_emulation() {
+        wasm.spaceinvadersmachine_start_emulation(this.__wbg_ptr);
+    }
+    /**
+     * @returns {number}
+     */
+    get_framebuffer_len() {
+        const ret = wasm.spaceinvadersmachine_get_framebuffer_len(this.__wbg_ptr);
+        return ret >>> 0;
     }
     /**
      * @returns {number}
@@ -293,43 +292,42 @@ export class SpaceInvadersMachine {
         return ret >>> 0;
     }
     /**
-     * @returns {number}
-     */
-    get_framebuffer_len() {
-        const ret = wasm.spaceinvadersmachine_get_framebuffer_len(this.__wbg_ptr);
-        return ret >>> 0;
-    }
-    start_emulation() {
-        wasm.spaceinvadersmachine_start_emulation(this.__wbg_ptr);
-    }
-    draw_screen() {
-        wasm.spaceinvadersmachine_draw_screen(this.__wbg_ptr);
-    }
-    do_cpu() {
-        wasm.spaceinvadersmachine_do_cpu(this.__wbg_ptr);
-    }
-    /**
-     * @param {number} scale_factor
      * @returns {ImageData}
      */
-    get_frame_image_data(scale_factor) {
-        const ret = wasm.spaceinvadersmachine_get_frame_image_data(this.__wbg_ptr, scale_factor);
+    get_frame_image_data() {
+        const ret = wasm.spaceinvadersmachine_get_frame_image_data(this.__wbg_ptr);
         if (ret[2]) {
             throw takeFromExternrefTable0(ret[1]);
         }
         return takeFromExternrefTable0(ret[0]);
     }
     /**
-     * @param {number} key
+     * @returns {any}
      */
-    handle_key_down(key) {
-        wasm.spaceinvadersmachine_handle_key_down(this.__wbg_ptr, key);
+    get_last_instructions() {
+        const ret = wasm.spaceinvadersmachine_get_last_instructions(this.__wbg_ptr);
+        return ret;
+    }
+    constructor() {
+        const ret = wasm.spaceinvadersmachine_new();
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        this.__wbg_ptr = ret[0] >>> 0;
+        SpaceInvadersMachineFinalization.register(this, this.__wbg_ptr, this);
+        return this;
+    }
+    do_cpu() {
+        wasm.spaceinvadersmachine_do_cpu(this.__wbg_ptr);
     }
     /**
-     * @param {number} key
+     * @param {Uint8Array} rom_data
+     * @param {number} offset
      */
-    handle_key_up(key) {
-        wasm.spaceinvadersmachine_handle_key_up(this.__wbg_ptr, key);
+    load_rom(rom_data, offset) {
+        const ptr0 = passArray8ToWasm0(rom_data, wasm.__wbindgen_malloc);
+        const len0 = WASM_VECTOR_LEN;
+        wasm.spaceinvadersmachine_load_rom(this.__wbg_ptr, ptr0, len0, offset);
     }
 }
 
@@ -413,16 +411,15 @@ export function __wbg_getElementById_734c4eac4fec5911(arg0, arg1, arg2) {
     return isLikeNone(ret) ? 0 : addToExternrefTable0(ret);
 };
 
-export function __wbg_instanceof_HtmlCanvasElement_022ad88c76df9031(arg0) {
-    let result;
-    try {
-        result = arg0 instanceof HTMLCanvasElement;
-    } catch (_) {
-        result = false;
-    }
-    const ret = result;
+export function __wbg_newwithu8clampedarrayandsh_585baa1bdfc0d2e2() { return handleError(function (arg0, arg1, arg2, arg3) {
+    const ret = new ImageData(getClampedArrayU8FromWasm0(arg0, arg1), arg2 >>> 0, arg3 >>> 0);
     return ret;
-};
+}, arguments) };
+
+export function __wbg_getContext_bf8985355a4d22ca() { return handleError(function (arg0, arg1, arg2) {
+    const ret = arg0.getContext(getStringFromWasm0(arg1, arg2));
+    return isLikeNone(ret) ? 0 : addToExternrefTable0(ret);
+}, arguments) };
 
 export function __wbg_width_cd62a064492c4489(arg0) {
     const ret = arg0.width;
@@ -434,15 +431,18 @@ export function __wbg_height_f9f3ea69baf38ed4(arg0) {
     return ret;
 };
 
-export function __wbg_getContext_bf8985355a4d22ca() { return handleError(function (arg0, arg1, arg2) {
-    const ret = arg0.getContext(getStringFromWasm0(arg1, arg2));
-    return isLikeNone(ret) ? 0 : addToExternrefTable0(ret);
-}, arguments) };
-
-export function __wbg_newwithu8clampedarrayandsh_585baa1bdfc0d2e2() { return handleError(function (arg0, arg1, arg2, arg3) {
-    const ret = new ImageData(getClampedArrayU8FromWasm0(arg0, arg1), arg2 >>> 0, arg3 >>> 0);
+export function __wbg_instanceof_HtmlCanvasElement_022ad88c76df9031(arg0) {
+    let result;
+    try {
+        result = arg0 instanceof HTMLCanvasElement;
+    } catch (_) {
+        result = false;
+    }
+    const ret = result;
     return ret;
-}, arguments) };
+};
+
+export const __wbg_error_53abcd6a461f73d8 = typeof console.error == 'function' ? console.error : notDefined('console.error');
 
 export function __wbg_instanceof_CanvasRenderingContext2d_775df7bd32f07559(arg0) {
     let result;
@@ -455,6 +455,10 @@ export function __wbg_instanceof_CanvasRenderingContext2d_775df7bd32f07559(arg0)
     return ret;
 };
 
+export function __wbg_putImageData_f9c66228770c0556() { return handleError(function (arg0, arg1, arg2, arg3) {
+    arg0.putImageData(arg1, arg2, arg3);
+}, arguments) };
+
 export function __wbg_setfillStyle_6e8de6f791782753(arg0, arg1) {
     arg0.fillStyle = arg1;
 };
@@ -464,18 +468,22 @@ export function __wbg_createImageData_13f37dafc4fcfae6() { return handleError(fu
     return ret;
 }, arguments) };
 
-export function __wbg_putImageData_f9c66228770c0556() { return handleError(function (arg0, arg1, arg2, arg3) {
-    arg0.putImageData(arg1, arg2, arg3);
-}, arguments) };
-
 export function __wbg_fillRect_6784ab0aab9eebd5(arg0, arg1, arg2, arg3, arg4) {
     arg0.fillRect(arg1, arg2, arg3, arg4);
 };
 
-export const __wbg_error_53abcd6a461f73d8 = typeof console.error == 'function' ? console.error : notDefined('console.error');
+export function __wbg_new_7a87a0376e40533b() {
+    const ret = new Map();
+    return ret;
+};
 
 export function __wbg_new_034f913e7636e987() {
     const ret = new Array();
+    return ret;
+};
+
+export function __wbg_new_e69b5f66fda8f13c() {
+    const ret = new Object();
     return ret;
 };
 
@@ -484,19 +492,13 @@ export function __wbg_newnoargs_1ede4bf2ebbaaf43(arg0, arg1) {
     return ret;
 };
 
-export function __wbg_new_7a87a0376e40533b() {
-    const ret = new Map();
+export function __wbg_set_277a63e77c89279f(arg0, arg1, arg2) {
+    const ret = arg0.set(arg1, arg2);
     return ret;
 };
 
-export function __wbg_call_a9ef466721e824f2() { return handleError(function (arg0, arg1) {
-    const ret = arg0.call(arg1);
-    return ret;
-}, arguments) };
-
-export function __wbg_new_e69b5f66fda8f13c() {
-    const ret = new Object();
-    return ret;
+export function __wbg_set_425e70f7c64ac962(arg0, arg1, arg2) {
+    arg0[arg1 >>> 0] = arg2;
 };
 
 export function __wbg_self_bf91bf94d9e04084() { return handleError(function () {
@@ -524,13 +526,13 @@ export function __wbindgen_is_undefined(arg0) {
     return ret;
 };
 
-export function __wbg_set_425e70f7c64ac962(arg0, arg1, arg2) {
-    arg0[arg1 >>> 0] = arg2;
-};
-
-export function __wbg_set_277a63e77c89279f(arg0, arg1, arg2) {
-    const ret = arg0.set(arg1, arg2);
+export function __wbg_call_a9ef466721e824f2() { return handleError(function (arg0, arg1) {
+    const ret = arg0.call(arg1);
     return ret;
+}, arguments) };
+
+export function __wbindgen_throw(arg0, arg1) {
+    throw new Error(getStringFromWasm0(arg0, arg1));
 };
 
 export function __wbindgen_debug_string(arg0, arg1) {
@@ -539,10 +541,6 @@ export function __wbindgen_debug_string(arg0, arg1) {
     const len1 = WASM_VECTOR_LEN;
     getDataViewMemory0().setInt32(arg0 + 4 * 1, len1, true);
     getDataViewMemory0().setInt32(arg0 + 4 * 0, ptr1, true);
-};
-
-export function __wbindgen_throw(arg0, arg1) {
-    throw new Error(getStringFromWasm0(arg0, arg1));
 };
 
 export function __wbindgen_init_externref_table() {

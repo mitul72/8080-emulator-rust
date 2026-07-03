@@ -1,1 +1,1 @@
-{"root":["./src/app.tsx","./src/main.tsx","./src/types.d.ts","./src/vite-env.d.ts"],"version":"5.6.3"}
+{"root":["./src/App.tsx","./src/main.tsx","./src/types.d.ts","./src/vite-env.d.ts","./src/components/emulator.tsx","./src/components/futuristic-neon-emulator.tsx","./src/components/ui/button.tsx","./src/components/ui/card.tsx","./src/components/ui/table.tsx","./src/lib/utils.ts"],"version":"5.6.3"}

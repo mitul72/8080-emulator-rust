@@ -7,10 +7,10 @@ const EmulatorComponent: React.FC<{ canvasRef: React.RefObject<HTMLCanvasElement
             <canvas
                 id="gameCanvas"
                 ref={canvasRef}
-                width={448}
-                height={512}
+                width={224}
+                height={256}
                 className="w-full h-auto border-2 border-cyan-400 rounded-lg shadow-md shadow-cyan-400/50"
-                style={{ aspectRatio: '448/512' }}
+                style={{ aspectRatio: '224/256', imageRendering: 'pixelated' }}
                 aria-label="Space Invaders game canvas"
             />
         </div>

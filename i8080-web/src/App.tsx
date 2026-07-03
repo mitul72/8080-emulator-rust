@@ -71,27 +71,8 @@ const Emulator = () => {
   const frameCountRef = useRef(0);
   const lastFpsUpdateRef = useRef(performance.now());
   const cpuStateUpdateCountRef = useRef(0);
-  // const [isFullscreen, setIsFullscreen] = useState(false);
-  const [scaleFactor, setScaleFactor] = useState(1);
   const [cpuState, setCpuState] = useState<any>(null);
   const [instructions, setInstructions] = useState<any>(null);
-
-  const updateScaleFactor = useCallback(() => {
-    const windowWidth = window.innerWidth;
-    const windowHeight = window.innerHeight;
-
-    const widthScale = windowWidth / ORIGINAL_WIDTH;
-    const heightScale = windowHeight / ORIGINAL_HEIGHT;
-
-    const newScaleFactor = Math.floor(Math.min(widthScale, heightScale));
-    setScaleFactor(Math.max(1, newScaleFactor)); // Ensure scale factor is at least 1
-  }, []);
-
-  useEffect(() => {
-    updateScaleFactor();
-    window.addEventListener("resize", updateScaleFactor);
-    return () => window.removeEventListener("resize", updateScaleFactor);
-  }, [updateScaleFactor]);
 
   const renderFrame = useCallback(() => {
     const offscreenCanvas = offscreenCanvasRef.current;
@@ -104,7 +85,7 @@ const Emulator = () => {
         for (let i = 0; i < 3; i++) {
           machine.do_cpu();
         }
-        const imageData = machine.get_frame_image_data(scaleFactor);
+        const imageData = machine.get_frame_image_data();
         ctx.putImageData(imageData, 0, 0);
         // Update CPU state less frequently (every 10 frames)
         cpuStateUpdateCountRef.current++;
@@ -127,7 +108,7 @@ const Emulator = () => {
       frameCountRef.current = 0;
       lastFpsUpdateRef.current = now;
     }
-  }, [scaleFactor]);
+  }, []);
 
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
     if (machineRef.current) {
@@ -211,7 +192,10 @@ const Emulator = () => {
     if (!canvas) return;
 
     if ("OffscreenCanvas" in window) {
-      offscreenCanvasRef.current = new OffscreenCanvas(448, 512);
+      offscreenCanvasRef.current = new OffscreenCanvas(
+        ORIGINAL_WIDTH,
+        ORIGINAL_HEIGHT
+      );
     }
 
     async function loadWasmAndStart() {
@@ -230,6 +214,7 @@ const Emulator = () => {
     }
 
     loadWasmAndStart();
+    let rafId: number;
     function updateMainCanvas() {
       const ctx = canvas?.getContext("2d");
       const offscreenCanvas = offscreenCanvasRef.current;
@@ -238,12 +223,13 @@ const Emulator = () => {
         ctx.drawImage(offscreenCanvas, 0, 0);
       }
 
-      requestAnimationFrame(updateMainCanvas);
+      rafId = requestAnimationFrame(updateMainCanvas);
     }
     updateMainCanvas();
 
     return () => {
       machineRef.current = null;
+      cancelAnimationFrame(rafId);
       if (fpsCtrlRef.current) {
         fpsCtrlRef.current.pause();
       }

@@ -1,59 +1,58 @@
 /* tslint:disable */
 /* eslint-disable */
-export function main(): void;
-export function init(): void;
 /**
  * @param {number} a
  * @param {number} b
  * @returns {number}
  */
 export function add(a: number, b: number): number;
+export function main(): void;
 /**
  * @param {number} ptr
  */
 export function draw_screen(ptr: number): void;
+export function init(): void;
 export class SpaceInvadersMachine {
   free(): void;
-  constructor();
-  /**
-   * @param {Uint8Array} rom_data
-   * @param {number} offset
-   */
-  load_rom(rom_data: Uint8Array, offset: number): void;
   /**
    * @returns {number}
    */
   get_memory(): number;
+  draw_screen(): void;
   /**
    * @returns {any}
    */
   get_cpu_state(): any;
   /**
-   * @returns {any}
+   * @param {number} key
    */
-  get_last_instructions(): any;
+  handle_key_up(key: number): void;
+  /**
+   * @param {number} key
+   */
+  handle_key_down(key: number): void;
+  start_emulation(): void;
+  /**
+   * @returns {number}
+   */
+  get_framebuffer_len(): number;
   /**
    * @returns {number}
    */
   get_framebuffer_ptr(): number;
   /**
-   * @returns {number}
-   */
-  get_framebuffer_len(): number;
-  start_emulation(): void;
-  draw_screen(): void;
-  do_cpu(): void;
-  /**
-   * @param {number} scale_factor
    * @returns {ImageData}
    */
-  get_frame_image_data(scale_factor: number): ImageData;
+  get_frame_image_data(): ImageData;
   /**
-   * @param {number} key
+   * @returns {any}
    */
-  handle_key_down(key: number): void;
+  get_last_instructions(): any;
+  constructor();
+  do_cpu(): void;
   /**
-   * @param {number} key
+   * @param {Uint8Array} rom_data
+   * @param {number} offset
    */
-  handle_key_up(key: number): void;
+  load_rom(rom_data: Uint8Array, offset: number): void;
 }

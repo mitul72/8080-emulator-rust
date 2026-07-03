@@ -10,7 +10,6 @@ use wasm_bindgen::prelude::*;
 use web_sys::console;
 use web_sys::{window, CanvasRenderingContext2d, Document, HtmlCanvasElement, ImageData};
 
-const SCALE_FACTOR: usize = 2;
 const SCREEN_WIDTH: usize = 224;
 const SCREEN_HEIGHT: usize = 256;
 const VIDEO_MEM_START: usize = 0x2400;
@@ -207,7 +206,7 @@ impl SpaceInvadersMachine {
     }
 
     pub fn draw_screen(&mut self) {
-        match self.get_frame_image_data(SCALE_FACTOR as u32) {
+        match self.get_frame_image_data() {
             Ok(image_data) => {
                 if let Err(e) = self.context.put_image_data(&image_data, 0.0, 0.0) {
                     console::error_1(&format!("Failed to put image data: {:?}", e).into());
@@ -238,74 +237,33 @@ impl SpaceInvadersMachine {
         }
     }
 
-    pub fn get_frame_image_data(&self, scale_factor: u32) -> Result<ImageData, JsValue> {
-        const SCREEN_WIDTH: usize = 224;
-        const SCREEN_HEIGHT: usize = 256;
-        const VIDEO_MEM_START: usize = 0x2400;
-        const VIDEO_MEM_END: usize = 0x4000;
+    pub fn get_frame_image_data(&self) -> Result<ImageData, JsValue> {
+        let mut pixels = vec![0u8; SCREEN_WIDTH * SCREEN_HEIGHT * 4];
 
-        let scaled_width = SCREEN_WIDTH * scale_factor as usize;
-        let scaled_height = SCREEN_HEIGHT * scale_factor as usize;
-
-        let mut pixels = vec![0u8; scaled_width * scaled_height * 4];
-
-        let framebuffer = &self.cpu.state.memory[VIDEO_MEM_START..VIDEO_MEM_END];
-
-        // Debug output
-        // console::log_1(&format!("Framebuffer size: {}", framebuffer.len()).into());
-        // console::log_1(&format!("First few bytes: {:?}", &framebuffer[..16]).into());
-
-        // Check for score area activity (top rows of original screen)
-        let mut score_area_pixels = 0;
-        for i in 0..32*8 { // First 8 rows where score typically appears
-            if framebuffer[i] != 0 {
-                score_area_pixels += framebuffer[i].count_ones();
-            }
-        }
-
-        // Draw the actual framebuffer content using the working coordinate system
         for addr in VIDEO_MEM_START..VIDEO_MEM_END {
             let byte = self.cpu.state.memory[addr];
+            if byte == 0 {
+                continue;
+            }
 
             // Each byte represents 8 vertical pixels
             for bit in 0..8 {
-                let pixel_on = (byte >> bit) & 1;
-
-                if pixel_on != 0 {
-                    // Calculate the x and y coordinates (same as working Rust version)
+                if (byte >> bit) & 1 != 0 {
+                    // Rotate the framebuffer 90° CCW into portrait orientation
                     let pixel_index = (addr - VIDEO_MEM_START) * 8 + bit;
-                    let x = (pixel_index % 256) as usize;
-                    let y = (pixel_index / 256) as usize;
+                    let x = pixel_index % SCREEN_HEIGHT;
+                    let y = pixel_index / SCREEN_HEIGHT;
 
-                    // Scale and rotate coordinates to match working implementation exactly
-                    let scaled_x = (256 - 1 - x) * scale_factor as usize;
-                    let scaled_y = y * scale_factor as usize;
-
-                    // Draw the scaled pixel (coordinates swapped for rotation like SDL version)
-                    for dy in 0..scale_factor as usize {
-                        for dx in 0..scale_factor as usize {
-                            let final_x = scaled_y + dy;  // SDL: scaled_y as x
-                            let final_y = scaled_x + dx;  // SDL: scaled_x as y
-
-                            if final_x < scaled_width && final_y < scaled_height {
-                                let idx = (final_y * scaled_width + final_x) * 4;
-                                if idx + 3 < pixels.len() {
-                                    pixels[idx] = 255; // Red
-                                    pixels[idx + 1] = 255; // Green
-                                    pixels[idx + 2] = 255; // Blue
-                                    pixels[idx + 3] = 255; // Alpha
-                                }
-                            }
-                        }
-                    }
+                    let idx = ((SCREEN_HEIGHT - 1 - x) * SCREEN_WIDTH + y) * 4;
+                    pixels[idx..idx + 4].copy_from_slice(&[255, 255, 255, 255]);
                 }
             }
         }
 
         ImageData::new_with_u8_clamped_array_and_sh(
             wasm_bindgen::Clamped(&pixels),
-            scaled_width as u32,   // 448 (224 * 2)
-            scaled_height as u32,  // 512 (256 * 2)
+            SCREEN_WIDTH as u32,
+            SCREEN_HEIGHT as u32,
         )
     }
 
