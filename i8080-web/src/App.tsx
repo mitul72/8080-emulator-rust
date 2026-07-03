@@ -246,46 +246,9 @@ const Emulator = () => {
         canvasRef={canvasRef}
         cpuState={cpuState}
         instructions={instructions}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
       />
-      {/* <div className="fps-counter">FPS: {fps}</div> */}
-      <div className="mobile-controls">
-        <button
-          onTouchStart={(e) => handleTouchStart(0x20, e)}
-          onTouchEnd={(e) => handleTouchEnd(0x20, e)}
-        >
-          Left
-        </button>
-        <button
-          onTouchStart={(e) => handleTouchStart(0x40, e)}
-          onTouchEnd={(e) => handleTouchEnd(0x40, e)}
-        >
-          Right
-        </button>
-        <button
-          onTouchStart={(e) => handleTouchStart(0x10, e)}
-          onTouchEnd={(e) => handleTouchEnd(0x10, e)}
-        >
-          Fire
-        </button>
-        <button
-          onTouchStart={(e) => handleTouchStart(0x04, e)}
-          onTouchEnd={(e) => handleTouchEnd(0x04, e)}
-        >
-          1P Start
-        </button>
-        <button
-          onTouchStart={(e) => handleTouchStart(0x02, e)}
-          onTouchEnd={(e) => handleTouchEnd(0x02, e)}
-        >
-          2P Start
-        </button>
-        <button
-          onTouchStart={(e) => handleTouchStart(0x01, e)}
-          onTouchEnd={(e) => handleTouchEnd(0x01, e)}
-        >
-          Coin
-        </button>
-      </div>
     </div>
   );
 };

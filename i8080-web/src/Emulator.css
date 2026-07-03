@@ -25,16 +25,3 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-/* Hide mobile controls on larger screens */
-@media (min-width: 768px) {
-  .mobile-controls {
-    display: none;
-  }
-}
-
-/* Show mobile controls only on touch devices */
-@media (hover: none) {
-  .mobile-controls {
-    display: block;
-  }
-}

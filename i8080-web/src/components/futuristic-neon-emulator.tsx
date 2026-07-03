@@ -63,10 +63,14 @@ export function FuturisticNeonEmulatorComponent({
   canvasRef,
   cpuState,
   instructions: wasmInstructions,
+  onTouchStart,
+  onTouchEnd,
 }: {
   canvasRef: React.RefObject<HTMLCanvasElement>;
   cpuState: any;
   instructions: any;
+  onTouchStart: (action: number, e: React.TouchEvent) => void;
+  onTouchEnd: (action: number, e: React.TouchEvent) => void;
 }) {
   const [showControls, setShowControls] = useState(true);
   const [instructions, setInstructions] = useState<Instruction[]>([]);
@@ -111,6 +115,51 @@ export function FuturisticNeonEmulatorComponent({
           </CardHeader>
           <CardContent>
             <EmulatorComponent canvasRef={canvasRef} />
+            {/* Mobile gamepad — hidden on md+ */}
+            <div className="md:hidden mt-4 select-none">
+              {/* Coin / Start row */}
+              <div className="flex justify-center gap-4 mb-4">
+                {([
+                  { label: "COIN", action: 0x01 },
+                  { label: "1P", action: 0x04 },
+                  { label: "2P", action: 0x02 },
+                ] as const).map(({ label, action }) => (
+                  <button
+                    key={label}
+                    onTouchStart={(e) => onTouchStart(action, e)}
+                    onTouchEnd={(e) => onTouchEnd(action, e)}
+                    className="px-5 py-2 rounded-full text-xs font-bold tracking-widest border border-purple-400 text-purple-300 bg-gray-900 active:bg-purple-400 active:text-gray-900 transition-colors"
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              {/* D-pad + Fire row */}
+              <div className="flex items-center justify-between px-2">
+                <div className="flex gap-3">
+                  {([
+                    { label: "◀", action: 0x20 },
+                    { label: "▶", action: 0x40 },
+                  ] as const).map(({ label, action }) => (
+                    <button
+                      key={label}
+                      onTouchStart={(e) => onTouchStart(action, e)}
+                      onTouchEnd={(e) => onTouchEnd(action, e)}
+                      className="w-16 h-16 rounded-full text-xl font-bold border-2 border-cyan-400 text-cyan-300 bg-gray-900 active:bg-cyan-400 active:text-gray-900 transition-colors shadow-lg shadow-cyan-400/20"
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onTouchStart={(e) => onTouchStart(0x10, e)}
+                  onTouchEnd={(e) => onTouchEnd(0x10, e)}
+                  className="w-20 h-20 rounded-full text-sm font-bold tracking-widest border-2 border-red-400 text-red-300 bg-gray-900 active:bg-red-400 active:text-gray-900 transition-colors shadow-lg shadow-red-400/20"
+                >
+                  FIRE
+                </button>
+              </div>
+            </div>
           </CardContent>
         </Card>
         <div className="w-full space-y-8 lg:w-1/2">
